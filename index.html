@@ -696,6 +696,20 @@ footer { background:var(--dark); color:#aaa; padding:40px 24px 24px; margin-top:
 .adm-pres.on { background:#e8f8ee;color:#1a7a3a;border-color:#b8e8c8; }
 .adm-pres.off { background:#ffeee8;color:#c0392b;border-color:#f8c8c0; }
 .adm-pres:hover { transform:scale(1.05); }
+/* Orden drag/drop */
+.adm-orden-item {
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:white;border:1px solid #eee;border-radius:10px;
+  margin-bottom:8px;cursor:grab;transition:all .15s;user-select:none;
+}
+.adm-orden-item:active { cursor:grabbing; }
+.adm-orden-item.dragging { opacity:0.4;transform:scale(0.98); }
+.adm-orden-item.drag-over { border-color:var(--orange);background:#fff8f0;transform:translateY(-2px);box-shadow:0 4px 12px rgba(232,93,38,0.15); }
+.adm-orden-handle { font-size:20px;color:#ccc;line-height:1; }
+.adm-orden-info { flex:1;min-width:0; }
+.adm-orden-nom { font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.adm-orden-meta { font-size:11px;color:#999;margin-top:2px; }
+.adm-orden-num { font-size:13px;font-weight:800;color:#ccc;min-width:20px;text-align:right; }
 </style>
 </head>
 <body>
@@ -2033,6 +2047,7 @@ function initFeaturedPrices() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  applyOrden();
   initFeaturedPrices();
   await cargarProductosDesdeAPI();
   renderProducts();
@@ -2068,6 +2083,7 @@ function showAdminPanel() {
       </div>
       <div class="adm-tabs">
         <button class="adm-tab active" onclick="admTab('productos',this)">Productos</button>
+        <button class="adm-tab" onclick="admTab('orden',this)">Orden</button>
         <button class="adm-tab" onclick="admTab('pedidos',this)">Pedidos</button>
         <button class="adm-tab" onclick="admTab('stats',this)">Estadísticas</button>
         <button class="adm-tab" onclick="admTab('config',this)">Config</button>
@@ -2075,6 +2091,11 @@ function showAdminPanel() {
       <div id="admProductos" class="adm-content">
         <input id="admSearch" placeholder="Buscar producto..." oninput="renderAdmProductos()" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:14px">
         <div id="admProdList"></div>
+      </div>
+      <div id="admOrden" class="adm-content" style="display:none">
+        <div style="padding:4px 4px 12px;font-size:12px;color:#999">Arrastrá los grupos para reordenar cómo aparecen en la home</div>
+        <div id="admOrdenList"></div>
+        <button onclick="saveOrden()" style="width:100%;margin-top:12px;background:var(--orange);color:white;border:none;padding:12px;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer">💾 Guardar orden</button>
       </div>
       <div id="admPedidos" class="adm-content" style="display:none">
         <div id="admPedList"><p style="color:#999;text-align:center;padding:32px">Cargando pedidos...</p></div>
@@ -2125,6 +2146,7 @@ function admTab(tab, btn) {
   btn.classList.add('active');
   if (tab === 'pedidos')  loadAdmPedidos();
   if (tab === 'stats')    loadAdmStats();
+  if (tab === 'orden')    renderAdmOrden();
 }
 
 function renderAdmProductos() {
@@ -2247,6 +2269,113 @@ async function loadAdmStats() {
   } catch(e) {
     cont.innerHTML = `<p style="color:red;padding:16px">Error: ${e.message}</p>`;
   }
+}
+
+// ── ORDEN DE PRODUCTOS ───────────────────────────────────────
+function getGruposOrdenados() {
+  const seen = new Set();
+  const grupos = [];
+  PRODUCTS.forEach(p => {
+    const key = p.nom + '||' + p.cat;
+    if (!seen.has(key)) {
+      seen.add(key);
+      grupos.push({ key, nom: p.nom, cat: p.cat, marca: p.marca });
+    }
+  });
+  try {
+    const saved = localStorage.getItem('dv_orden');
+    if (saved) {
+      const orden = JSON.parse(saved);
+      grupos.sort((a, b) => {
+        const ia = orden.indexOf(a.key);
+        const ib = orden.indexOf(b.key);
+        if (ia === -1 && ib === -1) return 0;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+    }
+  } catch(e) {}
+  return grupos;
+}
+
+function applyOrden() {
+  try {
+    const saved = localStorage.getItem('dv_orden');
+    if (!saved) return;
+    const orden = JSON.parse(saved);
+    PRODUCTS.sort((a, b) => {
+      const ka = a.nom + '||' + a.cat;
+      const kb = b.nom + '||' + b.cat;
+      const ia = orden.indexOf(ka);
+      const ib = orden.indexOf(kb);
+      if (ia === ib) return a.lts - b.lts;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  } catch(e) {}
+}
+
+function renderAdmOrden() {
+  const list = document.getElementById('admOrdenList');
+  const grupos = getGruposOrdenados();
+  list.innerHTML = grupos.map((g, i) => `
+    <div class="adm-orden-item" draggable="true" data-key="${g.key.replace(/"/g,"'")}"
+      ondragstart="ordenDragStart(event)"
+      ondragover="ordenDragOver(event)"
+      ondrop="ordenDrop(event)"
+      ondragend="ordenDragEnd(event)">
+      <span class="adm-orden-handle">⠿</span>
+      <div class="adm-orden-info">
+        <div class="adm-orden-nom">${g.nom}</div>
+        <div class="adm-orden-meta">${g.marca} · ${g.cat}</div>
+      </div>
+      <span class="adm-orden-num">${i + 1}</span>
+    </div>`).join('');
+}
+
+let dragSrc = null;
+function ordenDragStart(e) {
+  dragSrc = e.currentTarget;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function ordenDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (e.currentTarget !== dragSrc) {
+    document.querySelectorAll('.adm-orden-item').forEach(el => el.classList.remove('drag-over'));
+    e.currentTarget.classList.add('drag-over');
+  }
+}
+function ordenDrop(e) {
+  e.preventDefault();
+  const target = e.currentTarget;
+  if (target === dragSrc) return;
+  const list = document.getElementById('admOrdenList');
+  const items = [...list.querySelectorAll('.adm-orden-item')];
+  const srcIdx = items.indexOf(dragSrc);
+  const tgtIdx = items.indexOf(target);
+  if (srcIdx < tgtIdx) list.insertBefore(dragSrc, target.nextSibling);
+  else                  list.insertBefore(dragSrc, target);
+  [...list.querySelectorAll('.adm-orden-item')].forEach((el, i) => {
+    el.querySelector('.adm-orden-num').textContent = i + 1;
+    el.classList.remove('drag-over');
+  });
+}
+function ordenDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.adm-orden-item').forEach(el => el.classList.remove('drag-over'));
+}
+
+function saveOrden() {
+  const items = [...document.querySelectorAll('.adm-orden-item')];
+  const orden = items.map(el => el.dataset.key);
+  try { localStorage.setItem('dv_orden', JSON.stringify(orden)); } catch(e) {}
+  applyOrden();
+  renderProducts();
+  showToast('✅ Orden guardado');
 }
 
 </script>
