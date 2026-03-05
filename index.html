@@ -2366,8 +2366,9 @@ function applyOrden() {
 function renderAdmOrden() {
   const list = document.getElementById('admOrdenList');
   const grupos = getGruposOrdenados();
+  list._grupos = grupos; // guardar referencia para saveOrden
   list.innerHTML = grupos.map((g, i) => `
-    <div class="adm-orden-item" draggable="true" data-key="${g.key.replace(/"/g,"'")}"
+    <div class="adm-orden-item" draggable="true" data-idx="${i}"
       ondragstart="ordenDragStart(event)"
       ondragover="ordenDragOver(event)"
       ondrop="ordenDrop(event)"
@@ -2416,10 +2417,12 @@ function ordenDragEnd(e) {
 }
 
 function saveOrden() {
-  const items = [...document.querySelectorAll('.adm-orden-item')];
-  const orden = items.map(el => el.dataset.key);
+  const list   = document.getElementById('admOrdenList');
+  const grupos = list._grupos;
+  const items  = [...list.querySelectorAll('.adm-orden-item')];
+  // Reconstruir keys desde el índice original (evita corrupción de tildes/caracteres en data-*)
+  const orden  = items.map(el => grupos[parseInt(el.dataset.idx)].key);
   try { localStorage.setItem('dv_orden', JSON.stringify(orden)); } catch(e) {}
-  // Guardar en Sheet también
   if (API_URL) {
     fetch(API_URL, {
       method: 'POST',
