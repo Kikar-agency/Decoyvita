@@ -1527,7 +1527,7 @@ function isMainPresentation(prod) {
   // Mostrar la más grande y la segunda más grande (si existe)
   return prod.lts === maxLts || (secondMax !== null && prod.lts === secondMax);
 }
-function sendWhatsApp() {
+async function sendWhatsApp() {
   if (cart.length === 0) return;
   const lines = cart.map(item => {
     const p = precio(item.costo);
@@ -1536,7 +1536,6 @@ function sendWhatsApp() {
   const total = cart.reduce((s,c) => s + precio(c.costo).promo * c.qty, 0);
 
   // ── META PIXEL: evento de conversión Purchase ──────────────
-  // Se dispara cada vez que un cliente envía el pedido a WhatsApp
   if (typeof fbq !== 'undefined') {
     fbq('track', 'Purchase', {
       value: total,
@@ -1550,7 +1549,20 @@ function sendWhatsApp() {
       num_items: cart.reduce((s,c) => s + c.qty, 0)
     });
   }
-  // ── También podés trackear "InitiateCheckout" cuando abren el carrito ──
+
+  // ── GUARDAR EN GOOGLE SHEETS ───────────────────────────────
+  guardarPedidoAPI({
+    items: cart.map(item => ({
+      id:          item.id,
+      nom:         item.nom,
+      lts:         item.lts,
+      qty:         item.qty,
+      precio_unit: precio(item.costo).promo,
+    })),
+    total,
+    cliente_nombre: '',
+    cliente_tel:    '',
+  });
 
   const msg = `Hola! Quiero hacer el siguiente pedido 👇\n\n${lines.join('\n')}\n\n*Total transferencia: $${fmt(total)}*\n📦 Envío gratis (dentro del anillo de circunvalación, Córdoba)\n\n_Precios con 30% OFF por pago en transferencia bancaria_`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -1828,26 +1840,26 @@ function renderProductPage(prod) {
   document.getElementById('ppNombre').textContent = prod.nom;
   document.getElementById('ppMarca').textContent = `${prod.marca !== '-' ? prod.marca : ''} · ${unidad(prod.lts, prod.cat)}`;
 
-  // Imagen principal — carga automática si existe fotos/prod_ID.jpg
-  document.getElementById('ppMainImg').innerHTML = `
-    <img src="fotos/prod_${prod.id}.jpg" alt="${prod.nom}"
-      style="display:block;width:100%;height:100%;object-fit:cover;border-radius:14px"
-      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-    <div style="display:none;flex-direction:column;align-items:center;gap:8px;color:#bbb">
-      <div class="ph-big">${prodIcon(prod.cat)}</div>
-      <div class="ph-text">Foto principal del producto</div>
-      <div class="ph-hint">Subí la foto como: <strong>fotos/prod_${prod.id}.jpg</strong></div>
-    </div>
-  `;
+  // Imagen principal — usa PHOTO_MAP igual que las tarjetas
+  const ppSrc = prodImgSrc(prod);
+  document.getElementById('ppMainImg').innerHTML = ppSrc
+    ? `<img src="${ppSrc}" alt="${prod.nom}"
+        style="display:block;width:100%;height:100%;object-fit:cover;border-radius:14px"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <div style="display:none;flex-direction:column;align-items:center;gap:8px;color:#bbb">
+         <div class="ph-big">${prodIcon(prod.cat)}</div>
+       </div>`
+    : `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#bbb">
+         <div class="ph-big">${prodIcon(prod.cat)}</div>
+         <div class="ph-text">Foto principal del producto</div>
+       </div>`;
 
-  // Thumbnails
-  const thumbLabels = ['Foto frente', 'Foto lateral', 'Foto tapa', 'Contexto de uso'];
-  const thumbIcons = [prodIcon(prod.cat), '📦', '🔍', '🏠'];
-  document.getElementById('ppThumbs').innerHTML = thumbLabels.map((t,i) => `
-    <div class="pp-thumb ${i===0?'active':''}" onclick="selectThumb(this, ${i}, ${prod.id})">
-      <div class="th-icon">${thumbIcons[i]}</div>
-      <span>${t}</span>
-    </div>`).join('');
+  // Thumbnails — solo mostrar el de frente por ahora, ocultar los vacíos
+  document.getElementById('ppThumbs').innerHTML = `
+    <div class="pp-thumb active">
+      <div class="th-icon">${prodIcon(prod.cat)}</div>
+      <span>Frente</span>
+    </div>`;
 
   // Presentaciones
   document.getElementById('ppPresentaciones').innerHTML = currentProdGroup.map(p2 => `
@@ -1904,19 +1916,8 @@ function renderProductPage(prod) {
     <div class="pp-desc-text">${descText || '<p>Producto de alta calidad formulado para uso profesional y doméstico.</p>'}</div>
   `;
 
-  // Fotos contextuales
-  const fotos = CTX_PHOTOS[prod.cat] || CTX_PHOTOS.Otros;
-  document.getElementById('ppFotosCtx').innerHTML = `
-    <div class="pp-fotos-ctx-title">📸 Fotos de uso</div>
-    <div class="pp-fotos-grid">
-      ${fotos.map(f => `
-        <div class="pp-foto-ph">
-          <div class="fph-icon">${f.icon}</div>
-          <div class="fph-label">${f.label}</div>
-          <div style="font-size:10px;color:#ccc;margin-top:4px">${f.hint}</div>
-        </div>`).join('')}
-    </div>
-  `;
+  // Fotos contextuales — ocultas hasta tener fotos reales
+  document.getElementById('ppFotosCtx').innerHTML = '';
 
   // Reviews
   const reviews = REVIEWS_DATA[prod.cat] || REVIEWS_DATA.Latex;
