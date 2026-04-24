@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist Fotos — Deco & Vita</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f0f0f0; color: #1a1a1a; }
+
+  header {
+    background: #1a1a1a; color: white; padding: 20px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    position: sticky; top: 0; z-index: 100; border-bottom: 3px solid #E85D26;
+  }
+  header h1 { font-size: 20px; font-weight: 800; letter-spacing: .5px; }
+  .stats { display: flex; gap: 16px; align-items: center; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 900; color: #E85D26; line-height: 1; }
+  .stat-label { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+  .progress-bar { width: 200px; height: 8px; background: #333; border-radius: 100px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #E85D26; border-radius: 100px; transition: width .4s; }
+
+  .controls { padding: 16px 24px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 6px 14px; border-radius: 100px; border: 1.5px solid #ddd; background: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; }
+  .filter-btn:hover { border-color: #E85D26; color: #E85D26; }
+  .filter-btn.active { background: #E85D26; color: white; border-color: #E85D26; }
+  .filter-btn.green { border-color: #22c55e; color: #22c55e; }
+  .filter-btn.green.active { background: #22c55e; color: white; }
+
+  .main { padding: 20px 24px; max-width: 1100px; margin: 0 auto; }
+
+  .cat-section { margin-bottom: 32px; }
+  .cat-title {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;
+    color: #E85D26; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid #E85D26;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .cat-count { font-size: 10px; color: #999; font-weight: 600; margin-left: auto; }
+
+  .product-group { margin-bottom: 12px; background: white; border-radius: 12px; overflow: hidden; border: 1.5px solid #e8e8e8; }
+  .product-group.done { border-color: #bbf7d0; background: #f0fdf4; }
+  .group-header {
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none;
+  }
+  .group-name { font-weight: 700; font-size: 14px; flex: 1; }
+  .product-group.done .group-name { color: #16a34a; }
+  .group-marca { font-size: 11px; color: #999; background: #f0f0f0; padding: 2px 8px; border-radius: 100px; }
+  .group-progress { font-size: 11px; color: #999; white-space: nowrap; }
+  .product-group.done .group-progress { color: #16a34a; font-weight: 700; }
+
+  .variants { padding: 0 16px 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .variant {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 8px; border: 1.5px solid #e0e0e0;
+    cursor: pointer; transition: all .15s; background: white; min-width: 130px;
+  }
+  .variant:hover { border-color: #E85D26; }
+  .variant.checked { background: #f0fdf4; border-color: #22c55e; }
+  .variant input[type=checkbox] { width: 16px; height: 16px; accent-color: #22c55e; cursor: pointer; flex-shrink: 0; }
+  .variant-label { display: flex; flex-direction: column; gap: 1px; }
+  .variant-id { font-size: 10px; color: #999; font-family: monospace; }
+  .variant-lts { font-size: 13px; font-weight: 700; }
+  .variant.checked .variant-lts { color: #16a34a; }
+  .variant-file { font-size: 9px; color: #bbb; font-family: monospace; }
+  .variant.checked .variant-file { color: #86efac; }
+
+  .cat-title.prio-1 { color: #ef4444; border-color: #ef4444; }
+  .cat-title.prio-2 { color: #f97316; border-color: #f97316; }
+  .cat-title.prio-3 { color: #eab308; border-color: #eab308; }
+  .cat-title.prio-4 { color: #999; border-color: #ddd; }
+  .prio-desc { font-size: 12px; color: #999; margin: -6px 0 12px; font-style: italic; }
+
+  @media(max-width:600px) {
+    .main { padding: 12px; }
+    .controls { padding: 12px; }
+    .variant { min-width: 110px; }
+    .stats { gap: 10px; }
+    .progress-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📸 Checklist Fotos · Deco & Vita</h1>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="statDone">0</div><div class="stat-label">Listas</div></div>
+    <div class="stat"><div class="stat-num" id="statTotal">143</div><div class="stat-label">Total</div></div>
+    <div>
+      <div style="font-size:10px;color:#aaa;margin-bottom:4px;text-align:right" id="statPct">0%</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <button class="filter-btn active" onclick="setFilter('all',this)">Todos</button>
+  <button class="filter-btn" onclick="setFilter('Membranas',this)">🛡️ Membranas</button>
+  <button class="filter-btn" onclick="setFilter('Latex',this)">🎨 Látex</button>
+  <button class="filter-btn" onclick="setFilter('Sintetico',this)">⚗️ Sintético</button>
+  <button class="filter-btn" onclick="setFilter('Otros',this)">🔧 Otros</button>
+  <button class="filter-btn green" onclick="setFilter('pending',this)">⏳ Faltan</button>
+  <button class="filter-btn green" onclick="setFilter('done',this)">✅ Listas</button>
+  <button onclick="resetAll()" style="margin-left:auto;padding:6px 14px;border-radius:100px;border:1.5px solid #fca5a5;color:#ef4444;background:white;font-size:13px;font-weight:600;cursor:pointer;">🗑 Reset</button>
+</div>
+
+<div class="main" id="main"></div>
+
+<script>
+const PRODUCTS = [
+  {id:1,cat:"Membranas",nom:"Dupaint Membrana en Pasta Titanium",marca:"Dupaint",lts:1},
+  {id:2,cat:"Membranas",nom:"Dupaint Membrana en Pasta Titanium",marca:"Dupaint",lts:4},
+  {id:3,cat:"Membranas",nom:"Dupaint Membrana en Pasta Titanium",marca:"Dupaint",lts:10},
+  {id:4,cat:"Membranas",nom:"Dupaint Membrana en Pasta Titanium",marca:"Dupaint",lts:20},
+  {id:5,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica+Elastomérica",marca:"Dupaint",lts:1},
+  {id:6,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica+Elastomérica",marca:"Dupaint",lts:4},
+  {id:7,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica+Elastomérica",marca:"Dupaint",lts:10},
+  {id:8,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica+Elastomérica",marca:"Dupaint",lts:20},
+  {id:9,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica+Elastomérica",marca:"Dupaint",lts:24},
+  {id:10,cat:"Membranas",nom:"Dupaint Membrana Caucho+Poliuretánica",marca:"Dupaint",lts:4},
+  {id:11,cat:"Membranas",nom:"Dupaint Membrana Caucho+Poliuretánica",marca:"Dupaint",lts:10},
+  {id:12,cat:"Membranas",nom:"Dupaint Membrana Caucho+Poliuretánica",marca:"Dupaint",lts:20},
+  {id:13,cat:"Membranas",nom:"Dupaint Membrana Fibrada+Poliuretánica",marca:"Dupaint",lts:4},
+  {id:14,cat:"Membranas",nom:"Dupaint Membrana Fibrada+Poliuretánica",marca:"Dupaint",lts:10},
+  {id:15,cat:"Membranas",nom:"Dupaint Membrana Fibrada+Poliuretánica",marca:"Dupaint",lts:20},
+  {id:16,cat:"Membranas",nom:"Dupaint Membrana Fibrada",marca:"Dupaint",lts:1},
+  {id:17,cat:"Membranas",nom:"Dupaint Membrana Fibrada",marca:"Dupaint",lts:4},
+  {id:18,cat:"Membranas",nom:"Dupaint Membrana Fibrada",marca:"Dupaint",lts:10},
+  {id:19,cat:"Membranas",nom:"Dupaint Membrana Fibrada",marca:"Dupaint",lts:20},
+  {id:20,cat:"Membranas",nom:"Dupaint Membrana Fibrada",marca:"Dupaint",lts:24},
+  {id:21,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica",marca:"Dupaint",lts:1},
+  {id:22,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica",marca:"Dupaint",lts:4},
+  {id:23,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica",marca:"Dupaint",lts:10},
+  {id:24,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica",marca:"Dupaint",lts:20},
+  {id:25,cat:"Membranas",nom:"Dupaint Membrana Poliuretánica",marca:"Dupaint",lts:24},
+  {id:26,cat:"Membranas",nom:"Pimak Membrana Poliuretánica",marca:"Pimak",lts:4},
+  {id:27,cat:"Membranas",nom:"Pimak Membrana Poliuretánica",marca:"Pimak",lts:10},
+  {id:28,cat:"Membranas",nom:"Pimak Membrana Poliuretánica",marca:"Pimak",lts:20},
+  {id:29,cat:"Membranas",nom:"Pimak Membrana Elastomérica",marca:"Pimak",lts:4},
+  {id:30,cat:"Membranas",nom:"Pimak Membrana Elastomérica",marca:"Pimak",lts:10},
+  {id:31,cat:"Membranas",nom:"Pimak Membrana Elastomérica",marca:"Pimak",lts:20},
+  {id:32,cat:"Membranas",nom:"Zi-Muro Membrana Líquida",marca:"Zi-Muro",lts:1},
+  {id:33,cat:"Membranas",nom:"Zi-Muro Membrana Líquida",marca:"Zi-Muro",lts:4},
+  {id:34,cat:"Membranas",nom:"Zi-Muro Membrana Líquida",marca:"Zi-Muro",lts:10},
+  {id:35,cat:"Membranas",nom:"Zi-Muro Membrana Líquida",marca:"Zi-Muro",lts:20},
+  {id:36,cat:"Membranas",nom:"Zi-Muro Tapa Goteras",marca:"Zi-Muro",lts:1},
+  {id:37,cat:"Membranas",nom:"Zi-Muro Tapa Goteras",marca:"Zi-Muro",lts:5},
+  {id:38,cat:"Membranas",nom:"Zi-Muro Tapa Goteras",marca:"Zi-Muro",lts:10},
+  {id:39,cat:"Membranas",nom:"Zi-Muro Tapa Goteras",marca:"Zi-Muro",lts:20},
+  {id:40,cat:"Membranas",nom:"Dupaint Membrana Frentes y Muros Pol.+Elast.",marca:"Dupaint",lts:1.2},
+  {id:41,cat:"Membranas",nom:"Dupaint Membrana Frentes y Muros Pol.+Elast.",marca:"Dupaint",lts:4.8},
+  {id:42,cat:"Membranas",nom:"Dupaint Membrana Frentes y Muros Pol.+Elast.",marca:"Dupaint",lts:12},
+  {id:43,cat:"Membranas",nom:"Dupaint Membrana Frentes y Muros Pol.+Elast.",marca:"Dupaint",lts:20},
+  {id:44,cat:"Membranas",nom:"Dupaint Membrana Frentes y Muros Pol.+Elast.",marca:"Dupaint",lts:24},
+  {id:45,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:1.2},
+  {id:46,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:4.8},
+  {id:47,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:12},
+  {id:48,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:20},
+  {id:49,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:24},
+  {id:50,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:1},
+  {id:51,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:4},
+  {id:52,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:10},
+  {id:53,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:20},
+  {id:54,cat:"Latex",nom:"Dupaint Látex Cielorraso Interior",marca:"Dupaint",lts:1},
+  {id:55,cat:"Latex",nom:"Dupaint Látex Cielorraso Interior",marca:"Dupaint",lts:4},
+  {id:56,cat:"Latex",nom:"Dupaint Látex Cielorraso Interior",marca:"Dupaint",lts:10},
+  {id:57,cat:"Latex",nom:"Dupaint Látex Cielorraso Interior",marca:"Dupaint",lts:20},
+  {id:58,cat:"Latex",nom:"Dupaint Látex Pro Lavable Int/Ext",marca:"Dupaint",lts:1},
+  {id:59,cat:"Latex",nom:"Dupaint Látex Pro Lavable Int/Ext",marca:"Dupaint",lts:4},
+  {id:60,cat:"Latex",nom:"Dupaint Látex Pro Lavable Int/Ext",marca:"Dupaint",lts:10},
+  {id:61,cat:"Latex",nom:"Dupaint Látex Pro Lavable Int/Ext",marca:"Dupaint",lts:20},
+  {id:62,cat:"Latex",nom:"Dupaint Látex Works Lavable Int/Ext",marca:"Dupaint",lts:1},
+  {id:63,cat:"Latex",nom:"Dupaint Látex Works Lavable Int/Ext",marca:"Dupaint",lts:4},
+  {id:64,cat:"Latex",nom:"Dupaint Látex Works Lavable Int/Ext",marca:"Dupaint",lts:10},
+  {id:65,cat:"Latex",nom:"Dupaint Látex Works Lavable Int/Ext",marca:"Dupaint",lts:20},
+  {id:66,cat:"Latex",nom:"Dupaint Látex Profesional Int/Ext",marca:"Dupaint",lts:1},
+  {id:67,cat:"Latex",nom:"Dupaint Látex Profesional Int/Ext",marca:"Dupaint",lts:4},
+  {id:68,cat:"Latex",nom:"Dupaint Látex Profesional Int/Ext",marca:"Dupaint",lts:10},
+  {id:69,cat:"Latex",nom:"Dupaint Látex Profesional Int/Ext",marca:"Dupaint",lts:20},
+  {id:70,cat:"Latex",nom:"Zi-Muro Látex Int/Ext",marca:"Zi-Muro",lts:1},
+  {id:71,cat:"Latex",nom:"Zi-Muro Látex Int/Ext",marca:"Zi-Muro",lts:4},
+  {id:72,cat:"Latex",nom:"Zi-Muro Látex Int/Ext",marca:"Zi-Muro",lts:10},
+  {id:73,cat:"Latex",nom:"Zi-Muro Látex Int/Ext",marca:"Zi-Muro",lts:20},
+  {id:74,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:4},
+  {id:75,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:10},
+  {id:76,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:20},
+  {id:77,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:4},
+  {id:78,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:10},
+  {id:79,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:20},
+  {id:80,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:1},
+  {id:81,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:4},
+  {id:82,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:10},
+  {id:83,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:20},
+  {id:84,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 2/3",marca:"Duracril",lts:1},
+  {id:85,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 2/3",marca:"Duracril",lts:4},
+  {id:86,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 2/3",marca:"Duracril",lts:10},
+  {id:87,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 2/3",marca:"Duracril",lts:20},
+  {id:88,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 1",marca:"Zi-Muro",lts:4},
+  {id:89,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 1",marca:"Zi-Muro",lts:10},
+  {id:90,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 1",marca:"Zi-Muro",lts:20},
+  {id:91,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 2",marca:"Zi-Muro",lts:4},
+  {id:92,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 2",marca:"Zi-Muro",lts:10},
+  {id:93,cat:"Latex",nom:"Zi-Muro Látex Color Grupo 2",marca:"Zi-Muro",lts:20},
+  {id:94,cat:"Otros",nom:"Dupaint Masilla Sella Grietas/Juntas",marca:"Dupaint",lts:0.5},
+  {id:95,cat:"Otros",nom:"Dupaint Masilla Sella Grietas/Juntas",marca:"Dupaint",lts:1},
+  {id:96,cat:"Otros",nom:"Dupaint Masilla Sella Grietas/Juntas",marca:"Dupaint",lts:5},
+  {id:97,cat:"Otros",nom:"Zi-Muro Enduido Int/Ext",marca:"Zi-Muro",lts:0.5},
+  {id:98,cat:"Otros",nom:"Zi-Muro Enduido Int/Ext",marca:"Zi-Muro",lts:1},
+  {id:99,cat:"Otros",nom:"Zi-Muro Enduido Int/Ext",marca:"Zi-Muro",lts:4},
+  {id:100,cat:"Otros",nom:"Zi-Muro Enduido Int/Ext",marca:"Zi-Muro",lts:10},
+  {id:101,cat:"Otros",nom:"Zi-Muro Enduido Int/Ext",marca:"Zi-Muro",lts:20},
+  {id:102,cat:"Otros",nom:"Zi-Muro Masilla para Placa de Yeso",marca:"Zi-Muro",lts:1.6},
+  {id:103,cat:"Otros",nom:"Zi-Muro Masilla para Placa de Yeso",marca:"Zi-Muro",lts:6},
+  {id:104,cat:"Otros",nom:"Zi-Muro Masilla para Placa de Yeso",marca:"Zi-Muro",lts:15},
+  {id:105,cat:"Otros",nom:"Zi-Muro Masilla para Placa de Yeso",marca:"Zi-Muro",lts:25},
+  {id:106,cat:"Otros",nom:"Zi-Muro Fijador Sellador al Agua",marca:"Zi-Muro",lts:1},
+  {id:107,cat:"Otros",nom:"Zi-Muro Fijador Sellador al Agua",marca:"Zi-Muro",lts:4},
+  {id:108,cat:"Otros",nom:"Zi-Muro Fijador Sellador al Agua",marca:"Zi-Muro",lts:10},
+  {id:109,cat:"Otros",nom:"Zi-Muro Fijador Sellador al Agua",marca:"Zi-Muro",lts:20},
+  {id:110,cat:"Otros",nom:"Dupaint Esmalte Piso Lajas y Tejas",marca:"Dupaint",lts:1},
+  {id:111,cat:"Otros",nom:"Dupaint Esmalte Piso Lajas y Tejas",marca:"Dupaint",lts:4},
+  {id:112,cat:"Otros",nom:"Dupaint Esmalte Piso Lajas y Tejas",marca:"Dupaint",lts:10},
+  {id:113,cat:"Otros",nom:"Dupaint Esmalte Piso Lajas y Tejas",marca:"Dupaint",lts:20},
+  {id:114,cat:"Otros",nom:"Dupaint Esmalte Acrílico para Chapas",marca:"Dupaint",lts:1},
+  {id:115,cat:"Otros",nom:"Dupaint Esmalte Acrílico para Chapas",marca:"Dupaint",lts:4},
+  {id:116,cat:"Otros",nom:"Dupaint Esmalte Acrílico para Chapas",marca:"Dupaint",lts:10},
+  {id:117,cat:"Otros",nom:"Dupaint Esmalte Acrílico para Chapas",marca:"Dupaint",lts:20},
+  {id:118,cat:"Sintetico",nom:"Dupaint Pintura para Piscina al Agua",marca:"Dupaint",lts:1},
+  {id:119,cat:"Sintetico",nom:"Dupaint Pintura para Piscina al Agua",marca:"Dupaint",lts:4},
+  {id:120,cat:"Sintetico",nom:"Dupaint Pintura para Piscina al Agua",marca:"Dupaint",lts:10},
+  {id:121,cat:"Sintetico",nom:"Dupaint Pintura para Piscina al Agua",marca:"Dupaint",lts:20},
+  {id:122,cat:"Sintetico",nom:"Dupaint Protector Ladrillos Siliconado",marca:"Dupaint",lts:1},
+  {id:123,cat:"Sintetico",nom:"Dupaint Protector Ladrillos Siliconado",marca:"Dupaint",lts:4},
+  {id:124,cat:"Sintetico",nom:"Dupaint Protector Ladrillos Siliconado",marca:"Dupaint",lts:10},
+  {id:125,cat:"Sintetico",nom:"Dupaint Protector Ladrillos Siliconado",marca:"Dupaint",lts:20},
+  {id:126,cat:"Sintetico",nom:"Dupaint Protector para Madera Incoloro",marca:"Dupaint",lts:1},
+  {id:127,cat:"Sintetico",nom:"Dupaint Protector para Madera Incoloro",marca:"Dupaint",lts:4},
+  {id:128,cat:"Sintetico",nom:"Dupaint Protector para Madera Incoloro",marca:"Dupaint",lts:10},
+  {id:129,cat:"Sintetico",nom:"Dupaint Protector para Madera Incoloro",marca:"Dupaint",lts:20},
+  {id:130,cat:"Sintetico",nom:"Maderin Impregnante Lazur tipo Cetol",marca:"Maderin",lts:1},
+  {id:131,cat:"Sintetico",nom:"Maderin Impregnante Lazur tipo Cetol",marca:"Maderin",lts:4},
+  {id:132,cat:"Sintetico",nom:"Maderin Impregnante Lazur tipo Cetol",marca:"Maderin",lts:10},
+  {id:133,cat:"Sintetico",nom:"Maderin Impregnante Lazur tipo Cetol",marca:"Maderin",lts:20},
+  {id:134,cat:"Sintetico",nom:"Madeira Preservador y Curador para Madera",marca:"Madeira",lts:1},
+  {id:135,cat:"Sintetico",nom:"Madeira Preservador y Curador para Madera",marca:"Madeira",lts:5},
+  {id:136,cat:"Sintetico",nom:"Madeira Preservador y Curador para Madera",marca:"Madeira",lts:10},
+  {id:137,cat:"Sintetico",nom:"Madeira Preservador y Curador para Madera",marca:"Madeira",lts:20},
+  {id:138,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Blanco/Tintométrico",marca:"Dupaint",lts:5},
+  {id:139,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Blanco/Tintométrico",marca:"Dupaint",lts:15},
+  {id:140,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Blanco/Tintométrico",marca:"Dupaint",lts:25},
+  {id:141,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Standard",marca:"Dupaint",lts:4},
+  {id:142,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Standard",marca:"Dupaint",lts:10},
+  {id:143,cat:"Sintetico",nom:"Dupaint Revestimiento Rodillo Standard",marca:"Dupaint",lts:20},
+];
+
+const CATS = ['Membranas','Latex','Sintetico','Otros'];
+const CAT_LABELS = { Membranas:'🛡️ Membranas', Latex:'🎨 Látex', Sintetico:'⚗️ Sintético', Otros:'🔧 Otros' };
+
+// Prioridades visuales
+// P1: Tarjetas destacadas arriba del catálogo
+const P1_IDS = new Set([4, 69, 61]);
+// P2: Star cards (tarjetas con fondo en el scroll)
+const P2_IDS = new Set([61, 69, 73, 12, 8, 24, 35]);
+// P3: Caballitos de batalla completos (todas sus presentaciones)
+const P3_NOMS = new Set([
+  "Dupaint Látex Pro Lavable Int/Ext",       // premium látex
+  "Dupaint Látex Profesional Int/Ext",        // medio látex
+  "Zi-Muro Látex Int/Ext",                   // eco látex
+  "Dupaint Membrana Caucho+Poliuretánica",   // premium membrana
+  "Dupaint Membrana Poliuretánica+Elastomérica", // medio membrana
+  "Dupaint Membrana Poliuretánica",          // eco membrana
+  "Zi-Muro Membrana Líquida",               // eco membrana 2
+]);
+
+function getPriority(prod) {
+  if (P1_IDS.has(prod.id)) return 1;
+  if (P2_IDS.has(prod.id)) return 2;
+  if (P3_NOMS.has(prod.nom)) return 3;
+  return 4;
+}
+
+const PRIORITY_LABELS = {
+  1: { label: '🔴 P1 — Tarjetas destacadas', desc: 'Aparecen arriba del catálogo, visibles sin scrollear' },
+  2: { label: '🟠 P2 — Star cards del scroll', desc: 'Tarjetas con imagen de fondo, primeras en verse' },
+  3: { label: '🟡 P3 — Caballitos de batalla', desc: 'Los 8 productos estrella recomendados por el dueño' },
+  4: { label: '⚪ P4 — Resto del catálogo', desc: 'Se ven solo al filtrar por categoría' },
+};
+
+let checked = JSON.parse(localStorage.getItem('dv_fotos') || '{}');
+let currentFilter = 'all';
+
+function ltsLabel(l) {
+  if (l < 1) return (l * 1000) + ' ml';
+  if (Number.isInteger(l)) return l + (l === 1 ? ' lt' : ' lts');
+  return l + ' lts';
+}
+
+function save() {
+  localStorage.setItem('dv_fotos', JSON.stringify(checked));
+  updateStats();
+}
+
+function toggle(id) {
+  checked[id] = !checked[id];
+  save();
+  render();
+}
+
+function updateStats() {
+  const done = Object.values(checked).filter(Boolean).length;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statPct').textContent = Math.round(done/143*100) + '%';
+  document.getElementById('progressFill').style.width = (done/143*100) + '%';
+}
+
+function resetAll() {
+  if (!confirm('¿Resetear todo el checklist?')) return;
+  checked = {};
+  save();
+  render();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function renderGroups(prods) {
+  const groups = {};
+  prods.forEach(p => {
+    if (!groups[p.nom]) groups[p.nom] = { nom: p.nom, cat: p.cat, marca: p.marca, variants: [] };
+    groups[p.nom].variants.push(p);
+  });
+  return Object.values(groups).map(g => {
+    const allDone = g.variants.every(v => checked[v.id]);
+    const doneCnt = g.variants.filter(v => checked[v.id]).length;
+    return `<div class="product-group ${allDone ? 'done' : ''}">
+      <div class="group-header">
+        <div class="group-name">${g.nom}</div>
+        <span class="group-marca">${g.marca !== '-' ? g.marca : ''}</span>
+        <span class="group-progress">${doneCnt}/${g.variants.length} ${allDone ? '✅' : ''}</span>
+      </div>
+      <div class="variants">
+        ${g.variants.map(v => `
+        <div class="variant ${checked[v.id] ? 'checked' : ''}" onclick="toggle(${v.id})">
+          <input type="checkbox" ${checked[v.id] ? 'checked' : ''} onclick="event.stopPropagation();toggle(${v.id})">
+          <div class="variant-label">
+            <div class="variant-id">prod_${v.id}.jpg</div>
+            <div class="variant-lts">${ltsLabel(v.lts)}</div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function render() {
+  const main = document.getElementById('main');
+  let prods = PRODUCTS;
+
+  if (currentFilter === 'done') prods = prods.filter(p => checked[p.id]);
+  else if (currentFilter === 'pending') prods = prods.filter(p => !checked[p.id]);
+  else if (currentFilter !== 'all') prods = prods.filter(p => p.cat === currentFilter);
+
+  if (prods.length === 0) {
+    main.innerHTML = '<div class="empty">🎉 ¡Todo listo en esta sección!</div>';
+    updateStats(); return;
+  }
+
+  const byPriority = currentFilter === 'all' || currentFilter === 'done' || currentFilter === 'pending';
+  let html = '';
+
+  if (byPriority) {
+    [1,2,3,4].forEach(prio => {
+      const prioProds = prods.filter(p => getPriority(p) === prio);
+      if (!prioProds.length) return;
+      const pl = PRIORITY_LABELS[prio];
+      const done = prioProds.filter(p => checked[p.id]).length;
+      html += `<div class="cat-section">
+        <div class="cat-title prio-${prio}">${pl.label}<span class="cat-count">${done}/${prioProds.length}</span></div>
+        <div class="prio-desc">${pl.desc}</div>
+        ${renderGroups(prioProds)}
+      </div>`;
+    });
+  } else {
+    const done = prods.filter(p => checked[p.id]).length;
+    html += `<div class="cat-section">
+      <div class="cat-title">${CAT_LABELS[currentFilter]}<span class="cat-count">${done}/${prods.length}</span></div>
+      ${renderGroups(prods)}
+    </div>`;
+  }
+
+  main.innerHTML = html;
+  updateStats();
+}
+
+render();
+</script>
+</body>
+</html>
