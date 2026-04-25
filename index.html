@@ -203,31 +203,102 @@ nav a.promo:hover, nav a.promo.active { background: var(--orange); color: white;
 .section-sub { color:var(--gray); font-size:16px; margin-bottom:40px; }
 .divider { height:4px; background:linear-gradient(90deg,var(--orange) 0%,transparent 100%); max-width:80px; margin:12px 0 32px; border-radius:2px; }
 
-/* ===== PROBLEMA CARDS ===== */
-.problemas-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:24px; }
-.problema-card { border-radius:16px; padding:32px; position:relative; overflow:hidden; transition:transform .2s,box-shadow .2s; cursor: pointer; }
-.problema-card:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,0.12); }
-.problema-card.techo { background:linear-gradient(135deg,#1a2a3a 0%,#0d1822 100%); color:white; }
-.problema-card.pared { background:linear-gradient(135deg,#2d1a0d 0%,#1a0d05 100%); color:white; }
-.problema-card.piscina { background:linear-gradient(135deg,#0d2a2a 0%,#051818 100%); color:white; }
-.problema-card.alquiler { background:linear-gradient(135deg,#2a1a0d 0%,#1a0d05 100%); color:white; }
-.alquiler-badge { display:inline-block; background:var(--orange); color:white; font-size:11px; font-weight:800; padding:4px 10px; border-radius:100px; margin-bottom:8px; letter-spacing:.5px; }
-.problema-pill {
-  display:inline-block; background:var(--orange); color:white;
-  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:15px;
-  padding:4px 12px; border-radius:6px; letter-spacing:.5px;
-  text-transform:uppercase; margin-bottom:12px;
+/* ===== PROBLEMA CARDS — rediseño moderno ===== */
+.problemas-grid { display:flex; flex-direction:column; gap:20px; }
+
+.problema-card {
+  border-radius:22px; overflow:hidden;
+  display:grid; grid-template-columns:1fr 1fr;
+  min-height:280px; cursor:pointer;
+  box-shadow:0 8px 32px rgba(0,0,0,0.18);
+  transition:transform .35s cubic-bezier(.2,0,.2,1), box-shadow .35s ease;
+  opacity:0; animation:pcSlideUp .65s ease forwards;
 }
-.problema-emoji { font-size:48px; margin-bottom:16px; display:block; }
-.problema-titulo { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:22px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; line-height:1.2; }
-.problema-producto { font-size:13px; opacity:.7; margin-bottom:20px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; }
-.precios-wrap { margin-bottom:20px; }
-.precio-lista { font-size:14px; opacity:.6; text-decoration:line-through; margin-bottom:4px; }
-.precio-promo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:42px; color:var(--orange-light); line-height:1; }
-.precio-unit { font-size:18px; opacity:.8; }
-.add-btn { width:100%; background:var(--orange); color:white; border:none; border-radius:8px; padding:12px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:16px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:8px; }
-.add-btn:hover { background:var(--orange-light); transform:scale(1.02); }
-.add-btn.added { background:var(--success); }
+.problema-card:nth-child(1) { animation-delay:.05s; }
+.problema-card:nth-child(2) { animation-delay:.18s; }
+.problema-card:nth-child(3) { animation-delay:.31s; }
+@keyframes pcSlideUp {
+  from { opacity:0; transform:translateY(36px) scale(0.98); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.problema-card:hover { transform:translateY(-6px); box-shadow:0 24px 56px rgba(0,0,0,0.26); }
+
+/* Foto */
+.pc-foto { position:relative; overflow:hidden; }
+.pc-foto img {
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  transition:transform .55s cubic-bezier(.2,0,.2,1);
+}
+.problema-card:hover .pc-foto img { transform:scale(1.07); }
+.pc-foto-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(105deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.3) 100%);
+}
+
+/* Info */
+.pc-info {
+  display:flex; flex-direction:column; justify-content:center;
+  padding:32px 36px; gap:8px; color:white; position:relative;
+}
+.pc-eyebrow {
+  font-size:11px; font-weight:700; letter-spacing:2.5px;
+  text-transform:uppercase; color:var(--orange-light); margin-bottom:2px;
+}
+.pc-titulo {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(22px,2.8vw,32px); text-transform:uppercase; line-height:1.05;
+}
+.pc-titulo em { color:var(--orange-light); font-style:normal; }
+.pc-producto {
+  font-size:11px; opacity:.55; font-weight:600;
+  letter-spacing:.5px; text-transform:uppercase;
+}
+.alquiler-badge {
+  display:inline-block; background:rgba(232,93,38,0.25);
+  border:1px solid rgba(232,93,38,0.5); color:#ff8a5c;
+  font-size:11px; font-weight:800; padding:5px 12px; border-radius:100px;
+  letter-spacing:.5px; width:fit-content;
+}
+.pc-precios { margin:4px 0; }
+.pc-lista { font-size:12px; opacity:.45; text-decoration:line-through; margin-bottom:2px; }
+.pc-promo {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(32px,4vw,44px); color:var(--orange-light); line-height:1;
+}
+.pc-promo span { font-size:20px; }
+.pc-cta {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:#25D366; color:white; border:none; border-radius:10px;
+  padding:12px 18px; font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:15px; letter-spacing:.5px; text-transform:uppercase;
+  text-decoration:none; cursor:pointer; transition:all .2s; margin-top:4px;
+}
+.pc-cta:hover { background:#1fbd5a; transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,211,102,0.4); }
+.pc-cta.orange { background:var(--orange); }
+.pc-cta.orange:hover { background:var(--orange-dark); box-shadow:0 6px 20px rgba(232,93,38,0.4); }
+
+/* Fondos de info por tipo */
+.problema-card.techo .pc-info { background:linear-gradient(150deg,#0a1622,#0d1e2e); }
+.problema-card.pared .pc-info { background:linear-gradient(150deg,#160b04,#1e1008); }
+.problema-card.alquiler .pc-info { background:linear-gradient(150deg,#101010,#1a1a1a); }
+
+/* Segunda tarjeta: foto a la derecha */
+.problema-card.pared .pc-foto { order:2; }
+.problema-card.pared .pc-info { order:1; }
+.problema-card.pared .pc-foto-overlay {
+  background:linear-gradient(75deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 60%);
+}
+
+/* Mobile */
+@media(max-width:640px) {
+  .problema-card { grid-template-columns:1fr; min-height:auto; }
+  .pc-foto { height:200px; position:relative; }
+  .problema-card.pared .pc-foto { order:0; }
+  .problema-card.pared .pc-info { order:1; }
+  .pc-info { padding:22px 20px; gap:6px; }
+  .pc-promo { font-size:30px; }
+  .pc-titulo { font-size:22px; }
+}
 
 /* ===== CATÁLOGO con banners intercalados ===== */
 .catalogo-section { padding: 64px 24px; max-width: 1200px; margin: 0 auto; }
@@ -854,40 +925,67 @@ footer { background:var(--dark); color:#aaa; padding:40px 24px 24px; margin-top:
   <div class="section-title">Soluciones para tu hogar</div>
   <div class="divider"></div>
   <div class="problemas-grid">
+
+    <!-- CARD 1: Techo — foto izquierda, info derecha -->
     <div class="problema-card techo" onclick="openProduct(8)">
-      <span class="problema-emoji">🌧️</span>
-      <div class="problema-titulo">¿Tu techo filtra<br>por todos lados?</div>
-      <div class="problema-producto">Dupaint Membrana Poliuretánica+Elastomérica</div>
-      <div class="problema-pill">20 kg</div>
-      <div class="precios-wrap">
-        <div class="precio-lista" id="pl-techo"></div>
-        <div class="precio-promo"><span class="precio-unit">$</span><span id="pp-techo"></span></div>
+      <div class="pc-foto">
+        <img src="banners/ctx_techo.jpg" alt="Techo impermeabilizado">
+        <div class="pc-foto-overlay"></div>
       </div>
-      <a class="add-btn" href="https://wa.me/5493512514243?text=Hola!%20Me%20interesa%20la%20Membrana%20Pol%2BElast%2020kg%20%F0%9F%8E%A8%20%C2%BFCu%C3%A1l%20es%20el%20precio%20y%20tienen%20stock%3F" target="_blank" onclick="event.stopPropagation()"><span>💬 Consultar por WhatsApp</span></a>
+      <div class="pc-info">
+        <div class="pc-eyebrow">🛡️ Impermeabilizante</div>
+        <div class="pc-titulo">¿Tu techo filtra<br>con la <em>lluvia?</em></div>
+        <div class="pc-producto">Dupaint Membrana Pol+Elast · 20 kg</div>
+        <div class="pc-precios">
+          <div class="pc-lista" id="pl-techo"></div>
+          <div class="pc-promo"><span>$</span><span id="pp-techo"></span></div>
+        </div>
+        <a class="pc-cta" href="https://wa.me/5493512514243?text=Hola!%20Me%20interesa%20la%20Membrana%20Pol%2BElast%2020kg%20%F0%9F%8E%A8%20%C2%BFCu%C3%A1l%20es%20el%20precio%20y%20tienen%20stock%3F" target="_blank" onclick="event.stopPropagation()">
+          💬 Consultar por WhatsApp
+        </a>
+      </div>
     </div>
+
+    <!-- CARD 2: Paredes — info izquierda, foto derecha -->
     <div class="problema-card pared" onclick="openProduct(69)">
-      <span class="problema-emoji">🎨</span>
-      <div class="problema-titulo">¿Querés renovar<br>paredes sin gastar de más?</div>
-      <div class="problema-producto">Dupaint Látex Profesional Int/Ext</div>
-      <div class="problema-pill">20 lts</div>
-      <div class="precios-wrap">
-        <div class="precio-lista" id="pl-pared"></div>
-        <div class="precio-promo"><span class="precio-unit">$</span><span id="pp-pared"></span></div>
+      <div class="pc-foto">
+        <img src="banners/ctx_pared.jpg" alt="Pared pintada">
+        <div class="pc-foto-overlay"></div>
       </div>
-      <a class="add-btn" href="https://wa.me/5493512514243?text=Hola!%20Me%20interesa%20el%20L%C3%A1tex%20Profesional%2020L%20%F0%9F%8E%A8%20%C2%BFCu%C3%A1l%20es%20el%20precio%20y%20tienen%20stock%3F" target="_blank" onclick="event.stopPropagation()"><span>💬 Consultar por WhatsApp</span></a>
+      <div class="pc-info">
+        <div class="pc-eyebrow">🎨 Látex profesional</div>
+        <div class="pc-titulo">Renovás paredes<br>sin gastar <em>de más.</em></div>
+        <div class="pc-producto">Dupaint Látex Profesional Int/Ext · 20 lts</div>
+        <div class="pc-precios">
+          <div class="pc-lista" id="pl-pared"></div>
+          <div class="pc-promo"><span>$</span><span id="pp-pared"></span></div>
+        </div>
+        <a class="pc-cta" href="https://wa.me/5493512514243?text=Hola!%20Me%20interesa%20el%20L%C3%A1tex%20Profesional%2020L%20%F0%9F%8E%A8%20%C2%BFCu%C3%A1l%20es%20el%20precio%20y%20tienen%20stock%3F" target="_blank" onclick="event.stopPropagation()">
+          💬 Consultar por WhatsApp
+        </a>
+      </div>
     </div>
+
+    <!-- CARD 3: Alquiler/Mudanza — foto izquierda, info derecha -->
     <div class="problema-card alquiler" onclick="filterCat('Latex')">
-      <span class="problema-emoji">📦</span>
-      <div class="problema-titulo">¿Se venció tu contrato<br>y tenés que devolver pintado?</div>
-      <div class="problema-producto">Dupaint Látex Pro Lavable Int/Ext</div>
-      <div class="problema-pill">20 lts</div>
-      <div class="alquiler-badge">🎁 5% EXTRA para inquilinos que se mudan</div>
-      <div class="precios-wrap">
-        <div class="precio-lista" id="pl-piscina"></div>
-        <div class="precio-promo"><span class="precio-unit">$</span><span id="pp-piscina"></span></div>
+      <div class="pc-foto">
+        <img src="banners/mudanza.jpg" alt="Mudanza">
+        <div class="pc-foto-overlay"></div>
       </div>
-      <a class="add-btn" href="https://wa.me/5493512514243?text=Hola!%20Me%20mudo%20y%20necesito%20el%20descuento%20especial%20para%20inquilinos%20%F0%9F%8F%A0" target="_blank" onclick="event.stopPropagation()"><span>🏠 Quiero mi descuento de mudanza</span></a>
+      <div class="pc-info">
+        <div class="alquiler-badge">🎁 5% EXTRA para inquilinos que se mudan</div>
+        <div class="pc-titulo">¿Fin de contrato?<br>Devolvé el depto <em>impecable.</em></div>
+        <div class="pc-producto">Dupaint Látex Pro Lavable · 20 lts</div>
+        <div class="pc-precios">
+          <div class="pc-lista" id="pl-piscina"></div>
+          <div class="pc-promo"><span>$</span><span id="pp-piscina"></span></div>
+        </div>
+        <a class="pc-cta orange" href="https://wa.me/5493512514243?text=Hola!%20Me%20mudo%20y%20necesito%20el%20descuento%20especial%20para%20inquilinos%20%F0%9F%8F%A0" target="_blank" onclick="event.stopPropagation()">
+          🏠 Quiero el descuento de mudanza
+        </a>
+      </div>
     </div>
+
   </div>
 </div>
 
