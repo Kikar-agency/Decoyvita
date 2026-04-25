@@ -2033,6 +2033,14 @@ const NOBG_MAP = {
   73: "zimuro_latex_nobg.png",
 };
 
+// Keywords adicionales por categoría para búsqueda semántica
+const SEARCH_EXTRA = {
+  Membranas: 'techo goteras gotera filtrar filtra lluvia impermeabilizar impermeabilizante humedad fachada losa terraza azotea',
+  Latex:     'pared pintar interior exterior habitacion cuarto living comedor dormitorio lavable interior blanquear',
+  Sintetico: 'metal hierro chapa rejas ventanas pisos piso lajas tejas madera sillon madera barniz piscina pileta chapas',
+  Otros:     'enduido masilla grietas fijador sellador preservar ladrillos siliconado revestimiento textura',
+};
+
 function prodImgSrc(prod) {
   const file = PHOTO_MAP[prod.nom];
   return file ? "fotos/" + file : null;
@@ -2122,10 +2130,14 @@ function renderProducts() {
 
   // Aplicar búsqueda por texto si hay query
   if (q) {
-    filtered = PRODUCTS.filter(p => !DISABLED_IDS.has(p.id) &&
-      (p.nom.toLowerCase().includes(q) || p.marca.toLowerCase().includes(q) ||
-       catLabel(p.cat).toLowerCase().includes(q) || p.cat.toLowerCase().includes(q))
-    );
+    const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const words = norm(q).split(/\s+/).filter(Boolean);
+    filtered = PRODUCTS.filter(p => {
+      if (DISABLED_IDS.has(p.id)) return false;
+      const txt = norm([p.nom, p.marca, catLabel(p.cat), p.cat, SEARCH_EXTRA[p.cat]||''].join(' '));
+      // Coincide si AL MENOS UNA palabra aparece en el texto
+      return words.some(w => txt.includes(w));
+    });
   }
 
   // Star products siempre primero (en "Todos" y en búsqueda vacía)
