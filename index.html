@@ -2044,6 +2044,7 @@ function openProduct(id) {
   document.getElementById('productPage').style.display = 'block';
   document.getElementById('productPage').scrollTop = 0;
   window.scrollTo(0, 0);
+  history.pushState(null, '', '#prod-' + id);
 
   // ── META PIXEL: ViewContent — el cliente vio la página de este producto ──
   if (typeof fbq !== 'undefined') {
@@ -2323,6 +2324,7 @@ function goHome() {
   document.getElementById('productPage').style.display = 'none';
   document.getElementById('homePage').style.display = 'block';
   window.scrollTo(0, 0);
+  history.pushState(null, '', window.location.pathname);
 }
 
 // ============================================================
@@ -2360,6 +2362,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderProducts();
   updateCartUI();
   initAdminPanel();
+  // Abrir producto directo si viene con hash #prod-{id}
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#prod-')) {
+    const id = parseInt(hash.replace('#prod-', ''));
+    if (!isNaN(id)) openProduct(id);
+  }
 });
 
 // ── ADMIN PANEL ──────────────────────────────────────────────
