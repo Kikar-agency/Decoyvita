@@ -2030,7 +2030,7 @@ function addFeatured(id, btnEl) {
 let currentProdId = null;
 let currentProdGroup = [];
 
-function openProduct(id) {
+function openProduct(id, pushHistory = true) {
   const prod = PRODUCTS.find(p => p.id === id);
   if (!prod) return;
   currentProdId = id;
@@ -2044,7 +2044,7 @@ function openProduct(id) {
   document.getElementById('productPage').style.display = 'block';
   document.getElementById('productPage').scrollTop = 0;
   window.scrollTo(0, 0);
-  history.pushState(null, '', '#prod-' + id);
+  if (pushHistory) history.pushState({ prod: id }, '', '#prod-' + id);
 
   // ── META PIXEL: ViewContent — el cliente vio la página de este producto ──
   if (typeof fbq !== 'undefined') {
@@ -2320,11 +2320,11 @@ function addFromPage() {
   }, 2000);
 }
 
-function goHome() {
+function goHome(pushHistory = true) {
   document.getElementById('productPage').style.display = 'none';
   document.getElementById('homePage').style.display = 'block';
   window.scrollTo(0, 0);
-  history.pushState(null, '', window.location.pathname);
+  if (pushHistory) history.pushState({ home: true }, '', window.location.pathname);
 }
 
 // ============================================================
@@ -2366,7 +2366,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const hash = window.location.hash;
   if (hash && hash.startsWith('#prod-')) {
     const id = parseInt(hash.replace('#prod-', ''));
-    if (!isNaN(id)) openProduct(id);
+    if (!isNaN(id)) openProduct(id, false);
+  } else {
+    history.replaceState({ home: true }, '', window.location.pathname);
+  }
+});
+
+// Botón atrás del navegador — maneja la navegación dentro del SPA
+window.addEventListener('popstate', (e) => {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#prod-')) {
+    const id = parseInt(hash.replace('#prod-', ''));
+    if (!isNaN(id)) openProduct(id, false);
+  } else {
+    goHome(false);
   }
 });
 
