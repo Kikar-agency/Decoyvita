@@ -389,7 +389,7 @@ nav a.promo:hover, nav a.promo.active { background: var(--orange); color: white;
 .banner-img-area .ph-hint { font-size: 10px; opacity: 0.6; }
 
 /* PRODUCT GRID */
-.productos-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; }
+.productos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
 
 /* PRODUCT CARD */
 .prod-card {
@@ -427,8 +427,7 @@ nav a.promo:hover, nav a.promo.active { background: var(--orange); color: white;
 .prod-lista { font-size:12px; color:#aaa; text-decoration:line-through; margin-bottom:2px; }
 .prod-promo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:28px; color:var(--orange); line-height:1; margin-bottom:4px; }
 .prod-descuento { display:inline-block; background:#fff3ee; color:var(--orange); font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; margin-left:6px; font-family:'Barlow Condensed',sans-serif; }
-.prod-cuota { font-size:12px; color:var(--gray); margin-bottom:8px; }
-.prod-otras { font-size:12px; font-weight:600; color:var(--orange); margin-bottom:12px; display:flex; align-items:center; gap:5px; }
+.prod-cuota { font-size:12px; color:var(--gray); margin-bottom:12px; }
 .prod-actions { display:flex; gap:8px; }
 .prod-view-btn { flex:1; background:var(--cream); color:var(--dark); border:none; border-radius:8px; padding:9px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .2s; }
 .prod-view-btn:hover { background:var(--gray-light); }
@@ -685,9 +684,12 @@ footer { background:var(--dark); color:#aaa; padding:40px 24px 24px; margin-top:
 /* ===== STAR CARDS — horizontal, animadas ===== */
 .star-card {
   border-width:2px !important;
-  grid-column: auto;
+  grid-column: span 2;
 }
-/* En mobile la grilla sigue en 2 columnas; la destacada ocupa 1 */
+/* En mobile el grid ya es 1fr 1fr, star-card ocupa ambas */
+@media(max-width:520px) {
+  .star-card { grid-column: 1 / -1; }
+}
 
 .star-card-hero {
   position:relative; width:100%; aspect-ratio:4/3; overflow:hidden;
@@ -1850,16 +1852,6 @@ function getQualityBars(prod) {
 // ============================================================
 // HELPERS
 // ============================================================
-function otrasMedidas(prod) {
-  const sib = PRODUCTS.filter(p => p.nom === prod.nom && p.cat === prod.cat && p.id !== prod.id
-                                   && !DISABLED_IDS.has(p.id) && PUBLISHED_IDS.has(p.id))
-                      .map(p => p.lts).sort((a,b) => a-b);
-  if (!sib.length) return '';
-  const u = prod.cat === 'Membranas' ? 'kg' : 'L';
-  const nums = sib.map(l => l < 1 ? (Math.round(l*1000)+'g') : (''+l));
-  const txt = nums.length === 1 ? nums[0] : nums.slice(0,-1).join(', ') + ' y ' + nums[nums.length-1];
-  return `<div class="prod-otras">📦 También en ${txt} ${u}</div>`;
-}
 function precio(costo) {
   const promo = Math.round(costo * 1.35 / 10) * 10;
   const lista = Math.round(promo * 1.5 / 10) * 10;
@@ -1983,14 +1975,14 @@ function closeMobileNav() {
 
 // Solo mostrar presentaciones grandes en el scroll principal (20kg/lts o la más grande disponible)
 function isMainPresentation(prod) {
-  // 1 sola tarjeta por producto en el listado.
+  // Obtener todas las presentaciones del mismo producto
   const siblings = PRODUCTS.filter(p => p.nom === prod.nom && p.cat === prod.cat);
-  // Si el producto tiene una medida destacada (STAR = 20 kg/20 L), usamos esa.
-  const starSib = siblings.find(p => STAR_PRODUCTS[p.id]);
-  if (starSib) return prod.id === starSib.id;
-  // Si no, la presentación más grande disponible.
   const maxLts = Math.max(...siblings.map(p => p.lts));
-  return prod.lts === maxLts;
+  const secondMax = siblings.length > 1 
+    ? Math.max(...siblings.filter(p => p.lts < maxLts).map(p => p.lts))
+    : null;
+  // Mostrar la más grande y la segunda más grande (si existe)
+  return prod.lts === maxLts || (secondMax !== null && prod.lts === secondMax);
 }
 async function sendWhatsApp() {
   if (cart.length === 0) return;
@@ -2186,7 +2178,7 @@ function renderProducts() {
   } else if (currentFilter === 'Promo') {
     filtered = PRODUCTS.filter(p => PROMO_IDS.has(p.id) && !DISABLED_IDS.has(p.id) && PUBLISHED_IDS.has(p.id));
   } else {
-    filtered = PRODUCTS.filter(p => p.cat === currentFilter && isMainPresentation(p) && !DISABLED_IDS.has(p.id) && PUBLISHED_IDS.has(p.id));
+    filtered = PRODUCTS.filter(p => p.cat === currentFilter && !DISABLED_IDS.has(p.id) && PUBLISHED_IDS.has(p.id));
   }
 
   // Aplicar búsqueda por texto si hay query
@@ -2267,7 +2259,6 @@ function renderProdCard(prod) {
       <div class="prod-lista">Precio de lista: $${fmt(p.lista)}</div>
       <div class="prod-promo">$${fmt(p.promo)}<span class="prod-descuento">Transferencia</span></div>
       <div class="prod-cuota">o 6x $${fmt(p.cuota)} s/interés</div>
-      ${otrasMedidas(prod)}
       <div class="prod-actions">
         <button class="prod-view-btn" onclick="event.stopPropagation();openProduct(${prod.id})">Ver detalle</button>
         <button class="prod-add-btn" id="btn-${prod.id}" onclick="event.stopPropagation();addFromGrid(${prod.id})">+ Agregar</button>
@@ -2302,7 +2293,6 @@ function renderStarCard(prod, p, star) {
       <div class="prod-lista">Precio de lista: $${fmt(p.lista)}</div>
       <div class="prod-promo">$${fmt(p.promo)}<span class="prod-descuento">Transferencia</span></div>
       <div class="prod-cuota">o 6x $${fmt(p.cuota)} s/interés</div>
-      ${otrasMedidas(prod)}
       <div class="prod-actions">
         <button class="prod-view-btn" onclick="event.stopPropagation();openProduct(${prod.id})">Ver detalle</button>
         <button class="prod-add-btn" id="btn-${prod.id}" onclick="event.stopPropagation();addFromGrid(${prod.id})">+ Agregar</button>
