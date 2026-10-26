@@ -62,11 +62,9 @@ nav.tabs button.on{color:var(--brand)}
 .chip{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer}
 .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}
-.b-Consulta{background:#eef2f7;color:#41526b}
-.b-Presupuestado{background:#fff4e0;color:#8a5a00}
+.b-Presupuesto{background:#fff4e0;color:#8a5a00}
 .b-Confirmado{background:#e6f0fb;color:#1f5a9e}
 .b-Entregado{background:#e3f4ea;color:#1b6d3e}
-.b-Perdido{background:#f6e5e3;color:#99332a}
 .b-cobrado{background:#e3f4ea;color:#1b6d3e}
 .b-debe{background:#fde8e1;color:#a03b13}
 .b-geo{background:#e3f4ea;color:#1b6d3e}
@@ -210,7 +208,9 @@ details.done summary{cursor:pointer;font-weight:700;padding:8px 2px;color:var(--
 const SUPABASE_URL = 'https://duoapizgrfvlpeoxgmiq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1b2FwaXpncmZ2bHBlb3hnbWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NzgxNjgsImV4cCI6MjEwODU1NDE2OH0.UPoMufJ2Zo2hu2vjP7eTn9xuWu_icsNZ9yelHL53PZc';
 
-const ESTADOS = ['Consulta','Presupuestado','Confirmado','Entregado','Perdido'];
+const ESTADOS = ['Presupuesto','Confirmado','Entregado'];
+// Estados viejos (por si quedó alguno cargado) → estado actual
+const normEstado = e => ESTADOS.includes(e) ? e : 'Presupuesto';
 const ORIGENES = ['Meta / WhatsApp','Web','Instagram orgánico','Referido','Llamada mayorista','Otro'];
 const MEDIOS = ['Transferencia','Efectivo','Tarjeta / Mercado Pago'];
 const TIPOS_CLI = ['Minorista','Mayorista','Prospecto mayorista'];
@@ -434,6 +434,7 @@ async function cargarTodo(){
   ]);
   const err = [pr, cl, pe, ga, co].find(r => r.error);
   if (err) throw new Error(err.error.message);
+  pe.data.forEach(p => p.estado = normEstado(p.estado));
   Object.assign(S, { productos:pr.data, clientes:cl.data, pedidos:pe.data, gastos:ga.data });
   aplicarConfig(co.data);
 }
@@ -494,7 +495,7 @@ function tiempoReal(){
   const aplicar = (tabla, payload) => {
     const arr = S[tabla];
     if (payload.eventType === 'DELETE'){ const i = arr.findIndex(x => x.id === payload.old.id); if (i >= 0) arr.splice(i, 1); }
-    else { const n = payload.new; const i = arr.findIndex(x => x.id === n.id); if (i >= 0) arr[i] = n; else arr.push(n); }
+    else { const n = payload.new; if (tabla === 'pedidos') n.estado = normEstado(n.estado); const i = arr.findIndex(x => x.id === n.id); if (i >= 0) arr[i] = n; else arr.push(n); }
     clearTimeout(rtTimer); rtTimer = setTimeout(() => { if (!$('sheet').classList.contains('open')) render(); }, 400);
   };
   rtCanal = sb.channel('dv-cambios')
@@ -565,7 +566,7 @@ function closeSheet(){ $('sheet').classList.remove('open'); document.body.style.
 const VIEWS = {};
 
 /* ----------------------------- PEDIDOS ----------------------------- */
-const FILTROS_PED = { 'Activos':['Consulta','Presupuestado','Confirmado'], 'Consultas':['Consulta','Presupuestado'], 'Confirmados':['Confirmado'], 'Entregados':['Entregado'], 'Perdidos':['Perdido'], 'Todos':ESTADOS };
+const FILTROS_PED = { 'Activos':['Presupuesto','Confirmado'], 'Presupuestos':['Presupuesto'], 'Confirmados':['Confirmado'], 'Entregados':['Entregado'], 'Todos':ESTADOS };
 VIEWS.pedidos = () => {
   const cuenta = k => S.pedidos.filter(p => FILTROS_PED[k].includes(p.estado)).length;
   return `
@@ -586,8 +587,9 @@ function listaPedidosHTML(){
     const resumen = parseItems(p.items).map(i => `${num(i.cantidad)}× ${i.nombre} ${i.medida ? i.medida + (i.unidad||'') : ''}`).join(' · ');
     const fotos = [...new Set(parseItems(p.items).map(i => fotoKey(i.nombre)).filter(Boolean))].slice(0,4).map(k => `<img class="thumb xs" src="img/${k}.webp" alt="">`).join('');
     const esWeb = p.origen === 'Web' && String(p.id).startsWith('W');
+    const dias = p.estado === 'Presupuesto' && p.fecha ? Math.floor((new Date() - parseDate(p.fecha)) / 86400000) : 0;
     return `<div class="card list-item" onclick="formPedido('${esc(p.id)}')">
-      <div class="row"><div class="grow name">${esc(p.cliente_nombre || 'Sin nombre')}${esWeb ? `<span class="web-tag">🌐 ${esc(codigoWeb(p.id))}</span>` : ''}</div><span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span></div>
+      <div class="row"><div class="grow name">${esc(p.cliente_nombre || 'Sin nombre')}${esWeb ? `<span class="web-tag">🌐 ${esc(codigoWeb(p.id))}</span>` : ''}</div>${dias >= 2 ? `<span class="badge b-debe" style="margin-right:4px">⏰ ${dias} días</span>` : ''}<span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span></div>
       <div class="row" style="margin:4px 0 8px;gap:6px">${fotos}<div class="small muted grow">${esc(resumen) || 'Sin productos cargados'}</div></div>
       <div class="row small"><div class="grow muted">${p.fecha_entrega ? '🚚 ' + fechaCorta(p.fecha_entrega) : '📅 ' + fechaCorta(p.fecha)} · ${esc(p.origen || '')}</div>
         ${VENDIDO.includes(p.estado) ? `<span class="badge ${esSi(p.cobrado)?'b-cobrado':'b-debe'}">${esSi(p.cobrado)?'Cobrado':'A cobrar'}</span>` : ''}
@@ -602,9 +604,10 @@ function formPedido(id, preCliente){
   const base = id ? S.pedidos.find(p => String(p.id) === String(id)) : null;
   P = base ? { ...base, items: parseItems(base.items).map(x => ({...x})) } : {
     id:'', fecha:hoy(), cliente_id:'', cliente_nombre:'', telefono:'', direccion:'', lat:null, lng:null, tipo_precio:'transferencia',
-    items:[], estado:'Consulta', fecha_entrega:'', medio_pago:'Transferencia', cobrado:false, origen:'Meta / WhatsApp', notas:'',
+    items:[], estado:'Presupuesto', fecha_entrega:'', medio_pago:'Transferencia', cobrado:false, origen:'Meta / WhatsApp', notas:'',
   };
   if (preCliente){ const c = S.clientes.find(x => String(x.id) === String(preCliente)); if (c) asignarCliente(c, true); }
+  P.estado = normEstado(P.estado);
   P.cobrado = esSi(P.cobrado); P._calc = false; P._pick = false; P._buscaCli = '';
   P.items.forEach(vincularItem);
   P._web = base && base.origen === 'Web' && String(base.id).startsWith('W') && !base.cliente_id;
@@ -664,9 +667,9 @@ function drawPedido(){
     <div class="card">
       <h3 style="font-size:19px;margin-bottom:8px">Estado</h3>
       <div class="estado-steps">${ESTADOS.map(e => `<button class="${P.estado===e?'on':''}" onclick="P.estado='${e}';drawPedido()">${e}</button>`).join('')}</div>
-      <label class="f">Día de entrega</label>
-      <div class="chips" style="flex-wrap:wrap">${entregas.map(d => `<button class="chip ${P.fecha_entrega===d?'on':''}" onclick="P.fecha_entrega=P.fecha_entrega==='${d}'?'':'${d}';drawPedido()">${fechaCorta(d)}</button>`).join('')}
-        <input type="date" class="chip" style="padding:5px 10px" value="${esc(P.fecha_entrega || '')}" onchange="P.fecha_entrega=this.value;drawPedido()"></div>
+      <label class="f">Día de entrega <span style="font-weight:500">(al elegirlo, el pedido queda confirmado)</span></label>
+      <div class="chips" style="flex-wrap:wrap">${entregas.map(d => `<button class="chip ${P.fecha_entrega===d?'on':''}" onclick="elegirDia(P.fecha_entrega==='${d}'?'':'${d}')">${fechaCorta(d)}</button>`).join('')}
+        <input type="date" class="chip" style="padding:5px 10px" value="${esc(P.fecha_entrega || '')}" onchange="elegirDia(this.value)"></div>
       <div class="row" style="gap:10px">
         <div class="grow"><label class="f">Medio de pago</label><select class="i" onchange="P.medio_pago=this.value">${MEDIOS.map(m => `<option ${P.medio_pago===m?'selected':''}>${m}</option>`).join('')}</select></div>
         <div class="grow"><label class="f">Origen</label><select class="i" onchange="P.origen=this.value">${ORIGENES.map(m => `<option ${P.origen===m?'selected':''}>${m}</option>`).join('')}</select></div>
@@ -679,6 +682,11 @@ function drawPedido(){
   openSheet(P.id ? 'Pedido' : 'Nuevo pedido', html,
     `${P.id ? `<button class="btn ghost" onclick="eliminarPedido()" aria-label="Eliminar pedido">🗑️</button>` : ''}<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" id="btnGuardarPed" onclick="guardarPedido()">Guardar pedido</button>`);
   $('sheet').scrollTop = scroll;
+}
+function elegirDia(d){
+  P.fecha_entrega = d;
+  if (d && P.estado === 'Presupuesto'){ P.estado = 'Confirmado'; toast('Con día de entrega → pasa a Confirmado'); }
+  drawPedido();
 }
 function drawPedidoKeep(focusId){
   const pos = $(focusId) ? $(focusId).selectionStart : null;
@@ -852,7 +860,7 @@ async function guardarCliente(){
     if (C.direccion && !tieneGeo(C)){ const g = await geocodificar(C.direccion + (C.zona ? ', ' + C.zona : '')); if (g){ C.lat = g.lat; C.lng = g.lng; } }
     await guardar('clientes', C);
     // si cambió la ubicación, la pasamos a sus pedidos pendientes de entrega
-    const pend = S.pedidos.filter(p => String(p.cliente_id) === String(C.id) && ['Consulta','Presupuestado','Confirmado'].includes(p.estado) && (p.lat !== C.lat || p.lng !== C.lng));
+    const pend = S.pedidos.filter(p => String(p.cliente_id) === String(C.id) && ['Presupuesto','Confirmado'].includes(p.estado) && (p.lat !== C.lat || p.lng !== C.lng));
     if (pend.length && tieneGeo(C)) await guardarVarios('pedidos', pend.map(p => ({ id:p.id, lat:C.lat, lng:C.lng, direccion:p.direccion || C.direccion })));
     closeSheet(); render(); toast('Cliente guardado ✓');
   }catch(e){}
@@ -1074,7 +1082,7 @@ VIEWS.resumen = () => {
   const neto = bruta - gastos;
   const obj = cfg('OBJETIVO_NETO_MES', 3000000), socios = cfg('SOCIOS', 3);
   const pct = Math.max(0, Math.min(100, neto / obj * 100));
-  const definidos = delMes.filter(p => VENDIDO.includes(p.estado) || p.estado === 'Perdido').length;
+  const definidos = delMes.length;
   const cierre = definidos ? Math.round(vend.length / definidos * 100) : 0;
   const pubGasto = gastosMes.filter(g => g.categoria === 'Publicidad').reduce((s,g) => s + num(g.monto), 0);
   const deuda = S.pedidos.filter(p => VENDIDO.includes(p.estado) && !esSi(p.cobrado));
@@ -1102,7 +1110,7 @@ VIEWS.resumen = () => {
     <div class="card">
       <div class="row"><h3 class="grow" style="font-size:19px">Consultas por origen</h3><span class="small muted">${delMes.length} · cierre ${cierre}%</span></div>
       ${Object.keys(porOrigen).length ? Object.entries(porOrigen).sort((a,b) => b[1].c - a[1].c).map(([o,x]) => `<div class="hbar"><div class="t">${esc(o)}</div><div class="b"><div style="width:${x.c/maxO*100}%"></div></div><div class="n">${x.v}/${x.c}</div></div>`).join('') : '<div class="small muted">Sin datos este mes.</div>'}
-      <div class="small muted" style="margin-top:6px">vendidos / consultas. El % de cierre cuenta solo las consultas que ya se definieron (vendidas o perdidas).</div>
+      <div class="small muted" style="margin-top:6px">confirmados / presupuestos del mes. Los presupuestos que no avanzan se pueden eliminar.</div>
     </div>
     <div class="card">
       <div class="row"><h3 class="grow" style="font-size:19px">Falta cobrar</h3><b>${fmt(deuda.reduce((s,p) => s + num(p.total), 0))}</b></div>
