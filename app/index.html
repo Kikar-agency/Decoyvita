@@ -121,6 +121,10 @@ textarea.i{min-height:70px;resize:vertical}
 .estado-steps{display:flex;gap:6px;flex-wrap:wrap}
 .estado-steps button{flex:1 1 auto;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 8px;font-size:13.5px;font-weight:700;cursor:pointer}
 .estado-steps button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.thumb{width:52px;height:52px;object-fit:contain;flex:none;background:#faf8f5;border-radius:10px}
+.thumb.sm{width:38px;height:38px;border-radius:8px}
+.thumb.xs{width:28px;height:28px;border-radius:6px;background:none}
+.web-tag{display:inline-block;background:#eef2f7;color:#41526b;border-radius:6px;padding:1px 6px;font-size:12px;font-weight:700;margin-left:4px}
 .calc{background:#fff8f3;border:1.5px dashed #f0b896;border-radius:12px;padding:12px;margin-top:10px}
 .geo{background:#f7f5f1;border-radius:12px;padding:10px 12px;margin-top:10px}
 
@@ -308,6 +312,33 @@ function grupos(){
   return Object.values(g);
 }
 
+/* ----------------------------- fotos ----------------------------- */
+// Clave de foto según el nombre (sirve también para los nombres que vienen de la web)
+function fotoKey(nombre){
+  const n = String(nombre || '').toLowerCase();
+  if (/caucho/.test(n)) return 'dp-cau';
+  if (/elast/.test(n)) return 'dp-pe';
+  if (/zi-?muro/.test(n) && /membrana/.test(n)) return 'zm-memb';
+  if (/poliuret/.test(n)) return 'dp-pol';
+  if (/pro lavable/.test(n)) return 'dp-lav';
+  if (/profesional/.test(n)) return 'dp-prof';
+  if (/zi-?muro/.test(n) && /l[aá]tex/.test(n)) return 'zm-lat';
+  return '';
+}
+const FOTOS_OK = ['zm-memb','dp-pol','dp-pe','dp-cau','zm-lat','dp-prof','dp-lav'];
+function fotoHTML(nombre, cls){
+  const k = fotoKey(nombre);
+  return FOTOS_OK.includes(k) ? `<img class="thumb ${cls||''}" src="img/${k}.webp" alt="" loading="lazy">` : (cls === 'xs' ? '' : `<div class="thumb ${cls||''}" style="display:flex;align-items:center;justify-content:center;font-size:20px">🪣</div>`);
+}
+// Asocia ítems que vienen de la web (sin pid) con el producto de la app
+function vincularItem(it){
+  if (it.pid) return it;
+  const k = fotoKey(it.nombre);
+  const p = k && S.productos.find(x => String(x.id).startsWith(k + '-') && num(x.medida) === num(it.medida));
+  if (p) Object.assign(it, { pid:p.id, nombre:p.nombre, unidad:p.unidad || unidadDe(p.nombre,p.linea), costo:num(it.costo) || num(p.costo) });
+  return it;
+}
+
 /* ----------------------------- ubicación ----------------------------- */
 // Acepta links de Google Maps / WhatsApp o coordenadas sueltas "-31.41, -64.18"
 function parseUbicacion(txt){
@@ -319,13 +350,21 @@ function parseUbicacion(txt){
 async function geocodificar(dir){
   if (!dir || dir.trim().length < 4) return null;
   let q = dir.trim(); if (!/c[oó]rdoba/i.test(q)) q += ', Córdoba';
-  const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ar&viewbox=-64.45,-31.20,-63.95,-31.60&q=' + encodeURIComponent(q);
+  const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&countrycodes=ar&viewbox=-64.45,-31.20,-63.95,-31.60&q=' + encodeURIComponent(q);
   try{
     const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 6000);
     const res = await fetch(url, { signal: ctl.signal, headers:{ 'Accept-Language':'es' } });
     clearTimeout(to);
     const d = await res.json();
-    if (d && d[0]) return { lat:num(d[0].lat), lng:num(d[0].lon), nombre:d[0].display_name };
+    if (d && d.length){
+      // Si la dirección tiene altura, preferimos el resultado con ese número exacto
+      // (si no, OpenStreetMap suele devolver primero "la calle en general").
+      const altura = (dir.match(/\b(\d{1,5})\b/) || [])[1];
+      const exacto = altura && d.find(x => x.address && String(x.address.house_number || '').split(/[ ,;-]/)[0] === altura);
+      const casa = d.find(x => ['house','building'].includes(x.type) || x.class === 'building');
+      const r = exacto || casa || d[0];
+      return { lat:num(r.lat), lng:num(r.lon), nombre:r.display_name, exacto:!!exacto };
+    }
   }catch(e){}
   return null;
 }
@@ -357,7 +396,9 @@ async function ubicarDireccion(o, redraw){
   toast('Buscando…');
   const g = await geocodificar(o.direccion + (o.zona ? ', ' + o.zona : ''));
   if (!g) return toast('No la encontré. Pedile la ubicación por WhatsApp y pegala.');
-  o.lat = g.lat; o.lng = g.lng; toast('Encontrada: ' + g.nombre.split(',').slice(0,3).join(',')); window[redraw]();
+  o.lat = g.lat; o.lng = g.lng;
+  toast((g.exacto ? '✓ ' : 'Aproximada (sin la altura exacta): ') + g.nombre.split(',').slice(0,3).join(',') + (g.exacto ? '' : '. Si podés, pegá la ubicación de WhatsApp.'));
+  window[redraw]();
 }
 async function ubicarAca(o, redraw){
   try{ const g = await miUbicacion(); o.lat = g.lat; o.lng = g.lng; toast('Ubicación guardada ✓'); window[redraw](); }
@@ -423,6 +464,11 @@ async function guardar(tabla, fila){
   if (i >= 0) arr[i] = { ...arr[i], ...datos }; else arr.push({ ...datos });
   if (DEMO){ const db = demoDB(); db[tabla] = arr; LS.set('dv_demo2', db); }
   return datos;
+}
+async function borrar(tabla, id){
+  if (!DEMO){ const r = await sb.from(tabla).delete().eq('id', id); if (r.error){ toast('No se pudo borrar: ' + r.error.message); throw r.error; } }
+  S[tabla] = S[tabla].filter(x => String(x.id) !== String(id));
+  if (DEMO){ const db = demoDB(); db[tabla] = S[tabla]; LS.set('dv_demo2', db); }
 }
 async function guardarVarios(tabla, filas){
   // actualizaciones parciales (ej: orden de la ruta)
@@ -523,22 +569,26 @@ const FILTROS_PED = { 'Activos':['Consulta','Presupuestado','Confirmado'], 'Cons
 VIEWS.pedidos = () => {
   const cuenta = k => S.pedidos.filter(p => FILTROS_PED[k].includes(p.estado)).length;
   return `
-    <div class="search"><input class="i" placeholder="Buscar cliente, teléfono o dirección" value="${esc(UI.pedBusca)}" oninput="UI.pedBusca=this.value;$('lista').innerHTML=listaPedidosHTML()"></div>
+    <div class="search"><input class="i" placeholder="Buscar cliente, teléfono o código web" value="${esc(UI.pedBusca)}" oninput="UI.pedBusca=this.value;$('lista').innerHTML=listaPedidosHTML()"></div>
     <div class="chips">${Object.keys(FILTROS_PED).map(k => `<button class="chip ${UI.pedFiltro===k?'on':''}" onclick="UI.pedFiltro='${k}';render()">${k} · ${cuenta(k)}</button>`).join('')}</div>
     <div id="lista">${listaPedidosHTML()}</div>
     <button class="btn brand fab" onclick="formPedido()">＋ Nuevo pedido</button>`;
 };
 function listaPedidosHTML(){
-  const q = UI.pedBusca.toLowerCase();
-  const lista = S.pedidos.filter(p => FILTROS_PED[UI.pedFiltro].includes(p.estado))
-    .filter(p => !q || ((p.cliente_nombre||'') + ' ' + (p.telefono||'') + ' ' + (p.direccion||'')).toLowerCase().includes(q))
+  const q = UI.pedBusca.toLowerCase().trim(), qc = q.replace(/[-\s#]/g, '');
+  // si buscan un código de la web, se busca en todos los estados
+  const porCodigo = qc.length >= 4 && S.pedidos.some(p => String(p.id).toLowerCase() === qc || String(p.id).toLowerCase() === 'w' + qc);
+  const lista = S.pedidos.filter(p => porCodigo || FILTROS_PED[UI.pedFiltro].includes(p.estado))
+    .filter(p => !q || ((p.cliente_nombre||'') + ' ' + (p.telefono||'') + ' ' + (p.direccion||'')).toLowerCase().includes(q) || (qc.length >= 4 && String(p.id).toLowerCase().includes(qc)))
     .sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)) || String(b.id).localeCompare(String(a.id)));
   if (!lista.length) return `<div class="empty">No hay pedidos acá.<br>Cuando entre una consulta, tocá <b>＋ Nuevo pedido</b>.</div>`;
   return lista.map(p => {
     const resumen = parseItems(p.items).map(i => `${num(i.cantidad)}× ${i.nombre} ${i.medida ? i.medida + (i.unidad||'') : ''}`).join(' · ');
+    const fotos = [...new Set(parseItems(p.items).map(i => fotoKey(i.nombre)).filter(Boolean))].slice(0,4).map(k => `<img class="thumb xs" src="img/${k}.webp" alt="">`).join('');
+    const esWeb = p.origen === 'Web' && String(p.id).startsWith('W');
     return `<div class="card list-item" onclick="formPedido('${esc(p.id)}')">
-      <div class="row"><div class="grow name">${esc(p.cliente_nombre || 'Sin nombre')}</div><span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span></div>
-      <div class="small muted" style="margin:4px 0 8px">${esc(resumen) || 'Sin productos cargados'}</div>
+      <div class="row"><div class="grow name">${esc(p.cliente_nombre || 'Sin nombre')}${esWeb ? `<span class="web-tag">🌐 ${esc(codigoWeb(p.id))}</span>` : ''}</div><span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span></div>
+      <div class="row" style="margin:4px 0 8px;gap:6px">${fotos}<div class="small muted grow">${esc(resumen) || 'Sin productos cargados'}</div></div>
       <div class="row small"><div class="grow muted">${p.fecha_entrega ? '🚚 ' + fechaCorta(p.fecha_entrega) : '📅 ' + fechaCorta(p.fecha)} · ${esc(p.origen || '')}</div>
         ${VENDIDO.includes(p.estado) ? `<span class="badge ${esSi(p.cobrado)?'b-cobrado':'b-debe'}">${esSi(p.cobrado)?'Cobrado':'A cobrar'}</span>` : ''}
         <b style="font-size:16px">${fmt(p.total)}</b></div>
@@ -546,6 +596,7 @@ function listaPedidosHTML(){
   }).join('');
 }
 
+const codigoWeb = id => String(id).startsWith('W') ? 'W-' + String(id).slice(1) : id;
 let P = null;
 function formPedido(id, preCliente){
   const base = id ? S.pedidos.find(p => String(p.id) === String(id)) : null;
@@ -555,6 +606,9 @@ function formPedido(id, preCliente){
   };
   if (preCliente){ const c = S.clientes.find(x => String(x.id) === String(preCliente)); if (c) asignarCliente(c, true); }
   P.cobrado = esSi(P.cobrado); P._calc = false; P._pick = false; P._buscaCli = '';
+  P.items.forEach(vincularItem);
+  P._web = base && base.origen === 'Web' && String(base.id).startsWith('W') && !base.cliente_id;
+  if (P._web && /^Pedido web /.test(P.cliente_nombre || '') ) P.cliente_nombre = '';
   drawPedido();
   $('sheet').scrollTop = 0;
 }
@@ -569,6 +623,7 @@ function drawPedido(){
   const entregas = proximosReparto(4);
   if (P.fecha_entrega && !entregas.includes(P.fecha_entrega)) entregas.push(P.fecha_entrega);
   const html = `
+    ${P._web ? `<div class="card" style="background:#eef2f7"><b>🌐 Pedido armado en la web · código ${esc(codigoWeb(P.id))}</b><div class="small" style="margin-top:4px">Buscá en WhatsApp el chat que dice este código y cargá acá los datos del cliente. Los productos ya están cargados.</div></div>` : ''}
     <div class="card">
       <h3 style="font-size:19px;margin-bottom:6px">Cliente</h3>
       ${P.cliente_id ? `<div class="row"><div class="grow"><div style="font-weight:700">${esc(P.cliente_nombre)}</div><div class="small muted">${esc(P.telefono)}</div></div><button class="btn ghost sm" onclick="Object.assign(P,{cliente_id:'',cliente_nombre:'',telefono:'',direccion:'',lat:null,lng:null});drawPedido()">Cambiar</button></div>
@@ -589,6 +644,7 @@ function drawPedido(){
       </div>
       ${P.items.length ? P.items.map((it, i) => `
         <div class="item">
+          ${fotoHTML(it.nombre, 'sm')}
           <div class="grow"><div style="font-weight:700;font-size:15px">${esc(it.nombre)}${it.medida ? ' · ' + esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div>
             <div class="small muted">${fmt(it.precio)} c/u</div></div>
           <div class="stepper"><button onclick="cant(${i},-1)">−</button><input inputmode="numeric" value="${num(it.cantidad)}" onchange="P.items[${i}].cantidad=Math.max(0,num(this.value));drawPedido()"><button onclick="cant(${i},1)">+</button></div>
@@ -621,7 +677,7 @@ function drawPedido(){
     ${P.telefono ? `<a class="btn wa block" target="_blank" href="${waLink(P.telefono, textoPresupuesto())}">💬 Mandar presupuesto por WhatsApp</a>` : ''}`;
   const scroll = $('sheet').scrollTop;
   openSheet(P.id ? 'Pedido' : 'Nuevo pedido', html,
-    `<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" id="btnGuardarPed" onclick="guardarPedido()">Guardar pedido</button>`);
+    `${P.id ? `<button class="btn ghost" onclick="eliminarPedido()" aria-label="Eliminar pedido">🗑️</button>` : ''}<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" id="btnGuardarPed" onclick="guardarPedido()">Guardar pedido</button>`);
   $('sheet').scrollTop = scroll;
 }
 function drawPedidoKeep(focusId){
@@ -638,7 +694,7 @@ function cambiarTipo(k){
 }
 function pickerHTML(){
   return `<div class="prod-pick" style="margin-top:10px">${grupos().map(g => `
-    <div class="pp"><div class="n">${esc(g.nombre)}</div>
+    <div class="pp"><div class="row">${fotoHTML(g.nombre)}<div class="n grow">${esc(g.nombre)}</div></div>
       <div class="sizes">${g.tams.map(p => `<button onclick="agregarItem('${esc(p.id)}');drawPedido()">${esc(p.medida)} ${esc(g.unidad)}<small>${fmt(precioUnit(p.costo, P.tipo_precio))}</small></button>`).join('')}</div>
     </div>`).join('')}
     <div class="pp"><div class="n">Otro producto (a pedido)</div>
@@ -703,6 +759,13 @@ function textoPresupuesto(){
            : `💰 Total pagando por transferencia: *${fmt(t.total)}*`;
   const ent = P.fecha_entrega ? `\n🚚 Te lo llevamos el ${fechaLarga(P.fecha_entrega)}.` : '\n🚚 Entregamos martes y viernes, envío gratis dentro de Circunvalación.';
   return `¡Hola${nombre ? ' ' + nombre : ''}! Te paso el presupuesto 👇\n\n${lineas}\n\n${pago}${ent}\n\n¿Lo confirmamos?`;
+}
+async function eliminarPedido(){
+  if (!P.id) return;
+  const nombre = P.cliente_nombre || codigoWeb(P.id);
+  if (!confirm('¿Eliminar el pedido de ' + nombre + '? No se puede deshacer.')) return;
+  try{ await borrar('pedidos', P.id); }catch(e){ return; }
+  closeSheet(); render(); toast('Pedido eliminado');
 }
 async function guardarPedido(){
   if (!String(P.cliente_nombre || '').trim()) return toast('Falta el nombre del cliente');
@@ -903,7 +966,7 @@ function paradaHTML(p, i, eta, esSig, total){
         <div class="row"><div class="grow" style="font-weight:700;font-size:17px">${esc(p.cliente_nombre)}</div><div class="eta">${hhmm(eta.llegada)}</div></div>
         <a class="small" style="display:block;margin:2px 0 6px;color:var(--info)" target="_blank" href="${mapsVer(p)}">📍 ${esc(p.direccion || 'Sin dirección')}</a>
         ${!tieneGeo(p) ? `<div class="small" style="color:#8a5a00;margin-bottom:6px">Sin ubicar · <a href="#" onclick="event.preventDefault();guardarUbicacionAca('${esc(p.id)}')">guardar mi ubicación cuando llegue</a></div>` : ''}
-        <div style="font-size:15px;line-height:1.5">${items.map(it => `<div>• <b>${num(it.cantidad)}×</b> ${esc(it.nombre)} ${it.medida ? esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div>`).join('')}</div>
+        <div style="font-size:15px;line-height:1.5">${items.map(it => `<div class="row" style="gap:6px">${fotoHTML(it.nombre,'xs')}<div><b>${num(it.cantidad)}×</b> ${esc(it.nombre)} ${it.medida ? esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div></div>`).join('')}</div>
         ${p.notas ? `<div class="small" style="margin-top:6px;background:#fff8e6;padding:6px 8px;border-radius:8px">📝 ${esc(p.notas)}</div>` : ''}
         <div class="row" style="margin-top:8px"><div class="grow"><b style="font-size:18px">${fmt(p.total)}</b> <span class="small muted">${esc(p.medio_pago||'')}</span></div>
           <span class="badge ${cob?'b-cobrado':'b-debe'}">${cob?'Cobrado':'Cobrar'}</span></div>
@@ -978,7 +1041,7 @@ VIEWS.fabrica = () => {
   const peds = S.pedidos.filter(p => p.estado === 'Confirmado' && String(p.fecha_entrega||'').slice(0,10) === UI.fabFecha);
   const sinDia = S.pedidos.filter(p => p.estado === 'Confirmado' && !p.fecha_entrega);
   const suma = {};
-  peds.forEach(p => parseItems(p.items).forEach(i => {
+  peds.forEach(p => parseItems(p.items).map(x => vincularItem({...x})).forEach(i => {
     const k = i.nombre + '|' + (i.medida||'') + '|' + (i.unidad||'');
     (suma[k] = suma[k] || { nombre:i.nombre, medida:i.medida, unidad:i.unidad, cantidad:0, costo:num(i.costo) }).cantidad += num(i.cantidad);
   }));
@@ -991,7 +1054,7 @@ VIEWS.fabrica = () => {
     ${sinDia.length ? `<div class="card" style="background:#fff4e0"><b>⚠️ ${sinDia.length} pedido${sinDia.length>1?'s':''} confirmado${sinDia.length>1?'s':''} sin día de entrega.</b> <span class="small">No entran acá hasta que les pongas día.</span></div>` : ''}
     <div class="card">
       <div class="row"><h3 class="grow" style="font-size:19px">Lo que hay que retirar</h3><span class="small muted">${peds.length} pedido${peds.length!==1?'s':''}</span></div>
-      ${filas.length ? filas.map(f => `<div class="item"><div class="grow"><b>${esc(f.nombre)}</b> <span class="muted">${esc(f.medida)} ${esc(f.unidad||'')}</span></div><div class="big">${f.cantidad}</div></div>`).join('') : `<div class="small muted" style="padding:8px 0">No hay pedidos confirmados para ese día.</div>`}
+      ${filas.length ? filas.map(f => `<div class="item">${fotoHTML(f.nombre,'sm')}<div class="grow"><b>${esc(f.nombre)}</b> <span class="muted">${esc(f.medida)} ${esc(f.unidad||'')}</span></div><div class="big">${f.cantidad}</div></div>`).join('') : `<div class="small muted" style="padding:8px 0">No hay pedidos confirmados para ese día.</div>`}
       ${filas.length ? `<div class="sep"></div><div class="tot"><span class="muted">A pagar a fábrica (costo)</span><b>${fmt(costo)}</b></div>` : ''}
     </div>
     ${filas.length ? `<div class="row"><button class="btn ghost grow" onclick="copiar(window._txtFab)">Copiar</button><a class="btn wa grow" target="_blank" href="https://wa.me/?text=${encodeURIComponent(texto)}">💬 Mandar a fábrica</a></div>` : ''}`;
@@ -1078,8 +1141,9 @@ VIEWS.gastos = () => {
       <label class="f">Nota</label><input class="i" id="gN" placeholder="Ej: Meta 1–15 nov">
       <button class="btn brand block" style="margin-top:12px" onclick="guardarGasto()">Guardar gasto</button>
     </div>
-    ${lista.map(g => `<div class="card row"><div class="grow"><b>${esc(g.categoria)}</b><div class="small muted">${fechaCorta(g.fecha)}${g.nota ? ' · ' + esc(g.nota) : ''}</div></div><b>${fmt(g.monto)}</b></div>`).join('') || '<div class="empty">Sin gastos cargados.</div>'}`;
+    ${lista.map(g => `<div class="card row"><div class="grow"><b>${esc(g.categoria)}</b><div class="small muted">${fechaCorta(g.fecha)}${g.nota ? ' · ' + esc(g.nota) : ''}</div></div><b>${fmt(g.monto)}</b><button class="btn ghost xs" onclick="eliminarGasto('${esc(g.id)}')" aria-label="Eliminar gasto">🗑️</button></div>`).join('') || '<div class="empty">Sin gastos cargados.</div>'}`;
 };
+async function eliminarGasto(id){ if (!confirm('¿Eliminar este gasto?')) return; try{ await borrar('gastos', id); }catch(e){ return; } render(); toast('Gasto eliminado'); }
 async function guardarGasto(){
   const monto = num($('gM').value); if (!monto) return toast('Poné el monto');
   try{ await guardar('gastos', { fecha:$('gF').value || hoy(), categoria:$('gC').value, monto, nota:$('gN').value }); }catch(e){ return; }

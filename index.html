@@ -2024,11 +2024,14 @@ async function sendWhatsApp() {
   }
 
   // ── MANDAR A LA APP DE VENTAS (entra como "Consulta" de origen Web) ──
+  // Código corto que viaja en el mensaje de WhatsApp: con él se encuentra el pedido en la app
+  const ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let codigo = ''; for (let i = 0; i < 5; i++) codigo += ABC[Math.floor(Math.random() * ABC.length)];
   if (APP_SB_URL && APP_SB_KEY) {
     try {
       fetch(APP_SB_URL + '/rest/v1/rpc/pedido_web', { method:'POST', keepalive:true,
         headers:{ 'Content-Type':'application/json', apikey:APP_SB_KEY, Authorization:'Bearer ' + APP_SB_KEY },
-        body: JSON.stringify({ items: cart.map(item => ({ nom:item.nom, lts:item.lts, qty:item.qty, precio_unit:precio(item.costo).promo })) }) });
+        body: JSON.stringify({ codigo, items: cart.map(item => ({ nom:item.nom, lts:item.lts, unidad:(item.cat === 'Latex' ? 'L' : 'kg'), qty:item.qty, precio_unit:precio(item.costo).promo, costo:item.costo })) }) });
     } catch(e) {}
   }
 
@@ -2046,7 +2049,7 @@ async function sendWhatsApp() {
     cliente_tel:    '',
   });
 
-  const msg = `Hola! Quiero hacer el siguiente pedido 👇\n\n${lines.join('\n')}\n\n*Total transferencia: $${fmt(total)}*\n📦 Envío gratis (dentro del anillo de circunvalación, Córdoba)\n\n_Precios con 30% OFF por pago en transferencia bancaria_`;
+  const msg = `Hola! Quiero hacer el siguiente pedido 👇\n\n${lines.join('\n')}\n\n*Total transferencia: $${fmt(total)}*\n🧾 Código de pedido: *W-${codigo}*\n📦 Envío gratis (dentro del anillo de circunvalación, Córdoba)\n\n_Precios con 30% OFF por pago en transferencia bancaria_`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
