@@ -1260,8 +1260,8 @@ try { API_URL = localStorage.getItem('dv_api_url') || ""; } catch(e) {}
 // Supabase de la app de ventas (/app). Los pedidos que la gente arma en el carrito
 // entran solos como "Consulta" de origen Web. La anon key es pública por diseño:
 // la función pedido_web solo puede crear consultas, no leer datos.
-const APP_SB_URL = "";
-const APP_SB_KEY = "";
+const APP_SB_URL = "https://duoapizgrfvlpeoxgmiq.supabase.co";
+const APP_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1b2FwaXpncmZ2bHBlb3hnbWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NzgxNjgsImV4cCI6MjEwODU1NDE2OH0.UPoMufJ2Zo2hu2vjP7eTn9xuWu_icsNZ9yelHL53PZc";
 
 // IDs de productos desactivados localmente (fallback sin API)
 let DISABLED_IDS = new Set();
