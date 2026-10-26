@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#16130f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="D&V Ventas">
+<title>D&V Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ec; --card:#fff; --ink:#16130f; --muted:#6f685f; --line:#e4ded5;
+  --brand:#E85D26; --brand-2:#c94a17; --ok:#1f8a4c; --warn:#b7791f; --bad:#c0392b; --info:#2b6cb0;
+  --r:14px; --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;font-size:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,.cond{font-family:'Barlow Condensed',sans-serif;letter-spacing:.3px;margin:0}
+a{color:inherit}
+.hidden{display:none!important}
+
+/* Layout */
+header{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;gap:10px}
+header .logo{font-family:'Barlow Condensed';font-weight:800;font-size:22px}
+header .logo b{color:var(--brand)}
+header .title{flex:1;font-family:'Barlow Condensed';font-weight:700;font-size:18px;opacity:.85;text-transform:uppercase}
+header .sync{font-size:12px;opacity:.7}
+main{padding:14px 14px calc(96px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;padding:9px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted)}
+nav.tabs button .ic{font-size:20px;line-height:1}
+nav.tabs button.on{color:var(--brand)}
+
+/* Elements */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin-bottom:10px}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.big{font-size:22px;font-weight:700}
+.right{text-align:right}
+.sep{height:1px;background:var(--line);margin:12px 0}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;cursor:pointer;text-decoration:none}
+.btn.brand{background:var(--brand)}
+.btn.ok{background:var(--ok)}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.wa{background:#1fa855}
+.btn.sm{min-height:36px;padding:7px 12px;font-size:14px;border-radius:10px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.badge{display:inline-block;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;white-space:nowrap}
+.b-Consulta{background:#eef2f7;color:#41526b}
+.b-Presupuestado{background:#fff4e0;color:#8a5a00}
+.b-Confirmado{background:#e6f0fb;color:#1f5a9e}
+.b-Entregado{background:#e3f4ea;color:#1b6d3e}
+.b-Perdido{background:#f6e5e3;color:#99332a}
+.b-cobrado{background:#e3f4ea;color:#1b6d3e}
+.b-debe{background:#fde8e1;color:#a03b13}
+label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+input.i,select.i,textarea.i{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff;font-size:16px;outline:none}
+input.i:focus,select.i:focus,textarea.i:focus{border-color:var(--brand)}
+textarea.i{min-height:70px;resize:vertical}
+.search{position:relative;margin-bottom:10px}
+.search input{padding-left:38px}
+.search:before{content:'🔍';position:absolute;left:12px;top:11px;font-size:15px;opacity:.6}
+.list-item{cursor:pointer}
+.list-item .name{font-weight:700;font-size:16.5px}
+.empty{text-align:center;color:var(--muted);padding:34px 10px}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:19;border-radius:999px;box-shadow:0 6px 18px rgba(232,93,38,.4);padding:14px 20px;font-size:16px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kpi{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-family:'Barlow Condensed';font-size:26px;font-weight:700;margin-top:2px}
+.bar{height:12px;background:#ece6dd;border-radius:999px;overflow:hidden}
+.bar>div{height:100%;background:var(--brand);border-radius:999px}
+.hbar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}
+.hbar .t{width:110px;flex:none}
+.hbar .b{flex:1;height:10px;background:#ece6dd;border-radius:999px;overflow:hidden}
+.hbar .b>div{height:100%;background:var(--ink)}
+.hbar .n{width:34px;text-align:right;font-weight:700}
+
+/* Sheet (pantalla completa para formularios) */
+.sheet{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;display:none}
+.sheet.open{display:block}
+.sheet .sh-head{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;display:flex;align-items:center;gap:10px}
+.sheet .sh-head h2{flex:1;font-size:20px;text-transform:uppercase}
+.sheet .sh-head button{background:none;border:0;color:#fff;font-size:15px;font-weight:700;padding:8px}
+.sheet .sh-body{padding:14px 14px 120px;max-width:720px;margin:0 auto}
+.sheet .sh-foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:3}
+
+/* Items del pedido */
+.item{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.stepper{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.stepper button{border:0;background:#faf8f5;width:34px;height:34px;font-size:18px;font-weight:700}
+.stepper input{width:42px;border:0;text-align:center;font-weight:700;height:34px;outline:none}
+.prod-pick{display:grid;gap:8px}
+.prod-pick .pp{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+.prod-pick .pp .n{font-weight:700;font-size:15px}
+.sizes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sizes button{border:1.5px solid var(--line);background:#faf8f5;border-radius:10px;padding:6px 10px;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
+.sizes button small{display:block;color:var(--muted);font-weight:500}
+.tot{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0}
+.tot.main{font-family:'Barlow Condensed';font-size:26px;font-weight:800}
+.seg{display:flex;background:#ece6dd;border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;border-radius:10px;padding:9px 4px;font-weight:700;font-size:14px;cursor:pointer}
+.seg button.on{background:#fff;box-shadow:var(--shadow)}
+.estado-steps{display:flex;gap:6px;flex-wrap:wrap}
+.estado-steps button{flex:1 1 auto;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:9px 8px;font-size:13.5px;font-weight:700;cursor:pointer}
+.estado-steps button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.calc{background:#fff8f3;border:1.5px dashed #f0b896;border-radius:12px;padding:12px;margin-top:10px}
+
+/* Login */
+.login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--ink);color:#fff}
+.login .logo{font-family:'Barlow Condensed';font-weight:800;font-size:40px}
+.login .logo b{color:var(--brand)}
+.pin-dots{display:flex;gap:14px;margin:26px 0 18px}
+.pin-dots span{width:16px;height:16px;border-radius:50%;border:2px solid #fff;opacity:.8}
+.pin-dots span.on{background:var(--brand);border-color:var(--brand);opacity:1}
+.pad{display:grid;grid-template-columns:repeat(3,76px);gap:12px}
+.pad button{height:76px;border-radius:50%;border:0;background:#2a251f;color:#fff;font-size:28px;font-weight:600;cursor:pointer}
+.pad button:active{background:var(--brand)}
+.login .err{color:#ff9b78;height:22px;margin-top:6px;font-weight:600}
+
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:90vw;text-align:center}
+.demo-banner{background:#fff4e0;color:#8a5a00;font-size:13px;font-weight:600;padding:8px 14px;text-align:center}
+.tpl{white-space:pre-wrap;font-size:14.5px;line-height:1.4;background:#faf8f5;border-radius:10px;padding:10px;margin:8px 0}
+</style>
+</head>
+<body>
+
+<div id="login" class="login hidden">
+  <div class="logo">Deco <b>&</b> Vita</div>
+  <div class="muted" style="color:#bbb">Ingresá tu PIN</div>
+  <div class="pin-dots" id="pinDots"><span></span><span></span><span></span><span></span></div>
+  <div class="pad" id="pad"></div>
+  <div class="err" id="pinErr"></div>
+</div>
+
+<div id="app" class="hidden">
+  <header>
+    <div class="logo">D<b>&</b>V</div>
+    <div class="title" id="hTitle"></div>
+    <div class="sync" id="hSync"></div>
+  </header>
+  <div class="demo-banner hidden" id="demoBanner">Modo prueba: los datos quedan solo en este celular. Conectá la planilla en Más → Configuración.</div>
+  <main id="view"></main>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sh-head"><button onclick="closeSheet()">✕</button><h2 id="shTitle"></h2><span id="shAction"></span></div>
+  <div class="sh-body" id="shBody"></div>
+  <div class="sh-foot hidden" id="shFoot"></div>
+</div>
+
+<script>
+/* =====================================================================
+   DECO & VITA — App de ventas, reparto y administración
+   Datos: Google Sheets vía Apps Script (ver Code.gs). Sin planilla
+   conectada funciona en "modo prueba" guardando en este navegador.
+   ===================================================================== */
+
+const ESTADOS = ['Consulta','Presupuestado','Confirmado','Entregado','Perdido'];
+const ORIGENES = ['Meta / WhatsApp','Web','Instagram orgánico','Referido','Llamada mayorista','Otro'];
+const MEDIOS = ['Transferencia','Efectivo','Tarjeta / Mercado Pago'];
+const TIPOS_CLI = ['Minorista','Mayorista','Prospecto mayorista'];
+const ESTADOS_PROSP = ['Sin contactar','Contactado','Interesado','Cliente','Descartado'];
+const CAT_GASTOS = ['Publicidad','Nafta / envíos','Fábrica (fletes)','Otros'];
+const VENDIDO = ['Confirmado','Entregado'];
+
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} },
+};
+
+// La URL de la planilla puede venir en el link: .../app/?api=https://script.google.com/...
+(function(){
+  const u = new URLSearchParams(location.search).get('api');
+  if (u) { LS.set('dv_api', u); history.replaceState(null, '', location.pathname); }
+})();
+
+let API = LS.get('dv_api', '');
+let PIN = LS.get('dv_pin', '');
+let S = { rol:null, config:{}, productos:[], clientes:[], pedidos:[], gastos:[] };
+let TAB = null;
+let UI = { pedFiltro:'Activos', pedBusca:'', cliFiltro:'Todos', cliBusca:'', repFecha:null, fabFecha:null, mes:null };
+
+/* ----------------------------- utilidades ----------------------------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { const n = Number(String(v ?? '').toString().replace(',', '.')); return isFinite(n) ? n : 0; };
+const r10 = n => Math.round(n / 10) * 10;
+const fmt = n => '$' + Math.round(num(n)).toLocaleString('es-AR');
+const hoy = () => isoDate(new Date());
+function isoDate(d){ const z = n => String(n).padStart(2,'0'); return d.getFullYear() + '-' + z(d.getMonth()+1) + '-' + z(d.getDate()); }
+function parseDate(s){ if(!s) return null; const [y,m,d] = String(s).slice(0,10).split('-').map(Number); return new Date(y, m-1, d); }
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaCorta(s){ const d = parseDate(s); return d ? DIAS[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) : '—'; }
+function proximosReparto(n = 4){
+  const out = []; const d = new Date(); d.setHours(0,0,0,0);
+  for (let i = 0; out.length < n && i < 30; i++){
+    const x = new Date(d); x.setDate(d.getDate() + i);
+    if (x.getDay() === 2 || x.getDay() === 5) out.push(isoDate(x));
+  }
+  return out;
+}
+function telWa(t){
+  let d = String(t || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('549')) return d;
+  if (d.startsWith('54')) return '549' + d.slice(2);
+  if (d.startsWith('0')) d = d.slice(1);
+  d = d.replace(/^(\d{2,4})15/, '$1');
+  return '549' + d;
+}
+function waLink(tel, texto){ const n = telWa(tel); return 'https://wa.me/' + n + '?text=' + encodeURIComponent(texto || ''); }
+function mapsLink(dir){ return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(dir + ', Córdoba, Argentina'); }
+function toast(msg){ const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2300); }
+function parseItems(v){ if (Array.isArray(v)) return v; try { return JSON.parse(v || '[]'); } catch(e){ return []; } }
+function cfg(k, d){ const v = S.config[k]; return v === undefined || v === '' ? d : num(v); }
+function copiar(txt){
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => toast('Copiado ✓')).catch(() => fallbackCopy(txt));
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){ const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('Copiado ✓'); }catch(e){} ta.remove(); }
+
+/* ----------------------------- precios ----------------------------- */
+function precioUnit(costo, tipo){
+  const transf = r10(num(costo) * cfg('MARKUP', 1.35));
+  if (tipo === 'tarjeta') return r10(transf * cfg('RECARGO_TARJETA', 1.5));
+  if (tipo === 'mayorista') return r10(num(costo) * cfg('MARKUP_MAYORISTA', 1.15));
+  return transf;
+}
+function calcPedido(p){
+  const items = parseItems(p.items);
+  const total = items.reduce((s, i) => s + num(i.precio) * num(i.cantidad), 0);
+  const costo = items.reduce((s, i) => s + num(i.costo) * num(i.cantidad), 0);
+  const comision = p.tipo_precio === 'tarjeta' ? Math.round(total * cfg('COMISION_TARJETA', 0.25)) : 0;
+  return { total, costo_total: costo, comision, ganancia: total - costo - comision };
+}
+function unidadDe(nombre, linea){ return /látex|latex/i.test((linea||'') + ' ' + (nombre||'')) ? 'L' : 'kg'; }
+function grupos(){
+  const g = {};
+  S.productos.filter(p => p.activo !== false && String(p.activo).toUpperCase() !== 'FALSE').forEach(p => {
+    (g[p.nombre] = g[p.nombre] || { nombre:p.nombre, linea:p.linea, unidad:p.unidad || unidadDe(p.nombre,p.linea), tams:[] }).tams.push(p);
+  });
+  Object.values(g).forEach(x => x.tams.sort((a,b) => num(a.medida) - num(b.medida)));
+  return Object.values(g);
+}
+
+/* ----------------------------- datos / API ----------------------------- */
+const DEMO_PRODUCTOS = [
+  ['zm-memb','Zi-Muro Membrana Líquida','Membranas','kg',[[1,3562],[4,9582],[10,19303],[20,33345]]],
+  ['dp-pol','Dupaint Membrana Poliuretánica','Membranas','kg',[[1,4505],[4,12700],[10,25285],[20,46610]]],
+  ['dp-pe','Dupaint Membrana Pol+Elastomérica','Membranas','kg',[[1,6090],[4,17655],[10,34305],[20,72650]]],
+  ['dp-cau','Dupaint Membrana Caucho+Poliuretánica','Membranas','kg',[[4,19440],[10,52020],[20,82123]]],
+  ['zm-lat','Zi-Muro Látex Int/Ext','Látex','L',[[1,3280],[4,8430],[10,17524],[20,29490]]],
+  ['dp-prof','Dupaint Látex Profesional','Látex','L',[[1,3855],[4,10558],[10,23820],[20,41685]]],
+  ['dp-lav','Dupaint Látex Pro Lavable','Látex','L',[[1,5682],[4,14162],[10,36295],[20,65784]]],
+].flatMap(([id,n,l,u,t]) => t.map(([m,c]) => ({ id:id+'-'+m, nombre:n, linea:l, medida:m, unidad:u, costo:c, activo:true })));
+const DEMO_CONFIG = { MARKUP:1.35, RECARGO_TARJETA:1.5, COMISION_TARJETA:0.25, MARKUP_MAYORISTA:1.15, OBJETIVO_NETO_MES:3000000, SOCIOS:3, WA_NEGOCIO:'5493512514243' };
+
+function demoDB(){
+  let db = LS.get('dv_demo', null);
+  if (!db){ db = { productos:DEMO_PRODUCTOS, clientes:[], pedidos:[], gastos:[], config:DEMO_CONFIG }; LS.set('dv_demo', db); }
+  return db;
+}
+function nuevoId(pref){ return pref + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*36).toString(36).toUpperCase(); }
+
+async function cargar(pin){
+  if (!API){
+    const rol = { '1111':'admin', '2222':'ventas', '3333':'reparto' }[pin];
+    if (!rol) throw new Error('PIN incorrecto (en modo prueba: 1111, 2222 o 3333)');
+    const db = demoDB();
+    return { ok:true, rol, ...db };
+  }
+  const res = await fetch(API + '?pin=' + encodeURIComponent(pin) + '&t=' + Date.now());
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Error');
+  return data;
+}
+async function guardar(hoja, fila){
+  const key = { Clientes:'clientes', Pedidos:'pedidos', Gastos:'gastos', Productos:'productos' }[hoja];
+  const pref = { Clientes:'C', Pedidos:'P', Gastos:'G', Productos:'X' }[hoja];
+  if (!fila.id) fila.id = nuevoId(pref);
+  fila.actualizado = new Date().toISOString();
+  // actualización local inmediata
+  const arr = S[key] || (S[key] = []);
+  const i = arr.findIndex(x => String(x.id) === String(fila.id));
+  if (i >= 0) arr[i] = { ...arr[i], ...fila }; else arr.push({ ...fila });
+  if (!API){
+    const db = demoDB(); const a = db[key]; const j = a.findIndex(x => String(x.id) === String(fila.id));
+    if (j >= 0) a[j] = { ...a[j], ...fila }; else a.push({ ...fila });
+    LS.set('dv_demo', db); return fila;
+  }
+  setSync('Guardando…');
+  try{
+    const res = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ pin:PIN, action:'upsert', hoja, fila }) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    setSync('Guardado ✓'); setTimeout(() => setSync(''), 1500);
+  }catch(e){
+    setSync('⚠️ Sin guardar'); toast('No se pudo guardar: ' + e.message + '. Revisá la conexión y volvé a intentar.');
+    throw e;
+  }
+  return fila;
+}
+function setSync(t){ $('hSync').textContent = t; }
+async function refrescar(silencioso){
+  try{ const d = await cargar(PIN); Object.assign(S, d); if (!silencioso) toast('Actualizado'); render(); }
+  catch(e){ if (!silencioso) toast('No se pudo actualizar'); }
+}
+
+/* ----------------------------- login ----------------------------- */
+let pinBuf = '';
+function showLogin(){
+  $('app').classList.add('hidden'); $('login').classList.remove('hidden');
+  const pad = $('pad'); pad.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k => {
+    const b = document.createElement('button'); b.textContent = k;
+    if (!k) b.style.visibility = 'hidden';
+    b.onclick = () => pinKey(k); pad.appendChild(b);
+  });
+  pinBuf = ''; dots();
+}
+function dots(){ [...$('pinDots').children].forEach((s,i) => s.classList.toggle('on', i < pinBuf.length)); }
+async function pinKey(k){
+  $('pinErr').textContent = '';
+  if (k === '⌫'){ pinBuf = pinBuf.slice(0,-1); dots(); return; }
+  if (pinBuf.length >= 4) return;
+  pinBuf += k; dots();
+  if (pinBuf.length === 4){
+    $('pinErr').textContent = '…';
+    try{ const d = await cargar(pinBuf); PIN = pinBuf; LS.set('dv_pin', PIN); Object.assign(S, d); start(); }
+    catch(e){ $('pinErr').textContent = e.message; pinBuf = ''; dots(); }
+  }
+}
+function salir(){ LS.del('dv_pin'); PIN = ''; S.rol = null; closeSheet(); showLogin(); }
+
+/* ----------------------------- navegación ----------------------------- */
+const TABS = {
+  admin:   [['pedidos','🧾','Pedidos'],['clientes','👥','Clientes'],['reparto','🚚','Reparto'],['resumen','📊','Resumen'],['mas','☰','Más']],
+  ventas:  [['pedidos','🧾','Pedidos'],['clientes','👥','Clientes'],['reparto','🚚','Reparto'],['fabrica','🏭','Fábrica'],['mas','☰','Más']],
+  reparto: [['reparto','🚚','Reparto'],['mas','☰','Más']],
+};
+function start(){
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('demoBanner').classList.toggle('hidden', !!API);
+  const tabs = TABS[S.rol];
+  if (!TAB || !tabs.find(t => t[0] === TAB)) TAB = tabs[0][0];
+  render();
+}
+function go(t){ TAB = t; window.scrollTo(0,0); render(); }
+function render(){
+  const tabs = TABS[S.rol] || [];
+  $('tabs').innerHTML = tabs.map(([k,ic,l]) => `<button class="${k===TAB?'on':''}" onclick="go('${k}')"><span class="ic">${ic}</span>${l}</button>`).join('');
+  const titulos = { pedidos:'Pedidos', clientes:'Clientes', reparto:'Reparto', fabrica:'Pedido a fábrica', resumen:'Resumen', mas:'Más', respuestas:'Respuestas rápidas', gastos:'Gastos', productos:'Productos y costos', config:'Configuración' };
+  $('hTitle').textContent = titulos[TAB] || '';
+  const v = VIEWS[TAB]; $('view').innerHTML = v ? v() : '';
+}
+
+/* ----------------------------- sheet ----------------------------- */
+function openSheet(titulo, html, foot, accion){
+  $('shTitle').textContent = titulo; $('shBody').innerHTML = html;
+  $('shAction').innerHTML = accion || '';
+  const f = $('shFoot'); if (foot){ f.innerHTML = foot; f.classList.remove('hidden'); } else f.classList.add('hidden');
+  $('sheet').classList.add('open'); $('sheet').scrollTop = 0; document.body.style.overflow = 'hidden';
+}
+function closeSheet(){ $('sheet').classList.remove('open'); document.body.style.overflow = ''; }
+
+/* ======================================================================
+   VISTAS
+   ====================================================================== */
+const VIEWS = {};
+
+/* ----------------------------- PEDIDOS ----------------------------- */
+VIEWS.pedidos = () => {
+  const filtros = { 'Activos':['Consulta','Presupuestado','Confirmado'], 'Consultas':['Consulta','Presupuestado'], 'Confirmados':['Confirmado'], 'Entregados':['Entregado'], 'Perdidos':['Perdido'], 'Todos':ESTADOS };
+  const q = UI.pedBusca.toLowerCase();
+  let lista = S.pedidos.filter(p => filtros[UI.pedFiltro].includes(p.estado))
+    .filter(p => !q || (p.cliente_nombre + ' ' + p.telefono + ' ' + p.direccion).toLowerCase().includes(q))
+    .sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)) || String(b.actualizado).localeCompare(String(a.actualizado)));
+  const cuenta = k => S.pedidos.filter(p => filtros[k].includes(p.estado)).length;
+  return `
+    <div class="search"><input class="i" placeholder="Buscar cliente, teléfono o dirección" value="${esc(UI.pedBusca)}" oninput="UI.pedBusca=this.value;renderLista()"></div>
+    <div class="chips">${Object.keys(filtros).map(k => `<button class="chip ${UI.pedFiltro===k?'on':''}" onclick="UI.pedFiltro='${k}';render()">${k} · ${cuenta(k)}</button>`).join('')}</div>
+    <div id="lista">${listaPedidosHTML(lista)}</div>
+    <button class="btn brand fab" onclick="formPedido()">＋ Nuevo pedido</button>`;
+};
+function renderLista(){
+  if (TAB === 'pedidos'){ const tmp = document.createElement('div'); tmp.innerHTML = VIEWS.pedidos(); $('lista').innerHTML = tmp.querySelector('#lista').innerHTML; }
+  if (TAB === 'clientes'){ const tmp = document.createElement('div'); tmp.innerHTML = VIEWS.clientes(); $('lista').innerHTML = tmp.querySelector('#lista').innerHTML; }
+}
+function listaPedidosHTML(lista){
+  if (!lista.length) return `<div class="empty">No hay pedidos acá todavía.<br>Tocá <b>＋ Nuevo pedido</b> cuando entre una consulta.</div>`;
+  return lista.map(p => {
+    const items = parseItems(p.items);
+    const resumen = items.map(i => `${i.cantidad}× ${i.nombre} ${i.medida ? i.medida + (i.unidad||'') : ''}`).join(' · ');
+    return `<div class="card list-item" onclick="formPedido('${esc(p.id)}')">
+      <div class="row"><div class="grow name">${esc(p.cliente_nombre || 'Sin nombre')}</div><span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span></div>
+      <div class="small muted" style="margin:4px 0 8px">${esc(resumen) || 'Sin productos cargados'}</div>
+      <div class="row small"><div class="grow muted">${p.fecha_entrega ? '🚚 ' + fechaCorta(p.fecha_entrega) : '📅 ' + fechaCorta(p.fecha)} · ${esc(p.origen || '')}</div>
+        ${VENDIDO.includes(p.estado) ? `<span class="badge ${String(p.cobrado)==='true'||p.cobrado===true?'b-cobrado':'b-debe'}">${String(p.cobrado)==='true'||p.cobrado===true?'Cobrado':'A cobrar'}</span>` : ''}
+        <b style="font-size:16px">${fmt(p.total)}</b></div>
+    </div>`;
+  }).join('');
+}
+
+let P = null; // pedido en edición
+function formPedido(id, preCliente){
+  const base = id ? S.pedidos.find(p => String(p.id) === String(id)) : null;
+  P = base ? { ...base, items: parseItems(base.items).map(x => ({...x})) } : {
+    id:'', fecha:hoy(), cliente_id:'', cliente_nombre:'', telefono:'', direccion:'', tipo_precio:'transferencia',
+    items:[], estado:'Consulta', fecha_entrega:'', medio_pago:'Transferencia', cobrado:false, origen:'Meta / WhatsApp', notas:'',
+  };
+  if (preCliente){ const c = S.clientes.find(x => String(x.id) === String(preCliente)); if (c) asignarCliente(c, true); }
+  P.cobrado = P.cobrado === true || String(P.cobrado) === 'true';
+  P._calc = false; P._pick = false;
+  drawPedido();
+}
+function asignarCliente(c, silent){
+  P.cliente_id = c.id; P.cliente_nombre = c.nombre; P.telefono = c.telefono; P.direccion = c.direccion;
+  if (c.tipo === 'Mayorista' && !P.items.length) P.tipo_precio = 'mayorista';
+  if (!silent) drawPedido();
+}
+function drawPedido(){
+  const t = calcPedido(P);
+  const ver = S.rol !== 'reparto';
+  const clientesSug = P._buscaCli ? S.clientes.filter(c => (c.nombre + ' ' + c.telefono).toLowerCase().includes(P._buscaCli.toLowerCase())).slice(0,5) : [];
+  const entregas = proximosReparto(4);
+  if (P.fecha_entrega && !entregas.includes(P.fecha_entrega)) entregas.push(P.fecha_entrega);
+  const html = `
+    <div class="card">
+      <h3 style="font-size:19px;margin-bottom:6px">Cliente</h3>
+      ${P.cliente_id ? `<div class="row"><div class="grow"><div class="name" style="font-weight:700">${esc(P.cliente_nombre)}</div><div class="small muted">${esc(P.telefono)} · ${esc(P.direccion||'sin dirección')}</div></div><button class="btn ghost sm" onclick="P.cliente_id='';P.cliente_nombre='';P.telefono='';P.direccion='';drawPedido()">Cambiar</button></div>`
+      : `<input class="i" placeholder="Buscar cliente existente…" value="${esc(P._buscaCli||'')}" oninput="P._buscaCli=this.value;drawPedidoKeep('cliBus')" id="cliBus">
+         ${clientesSug.map(c => `<div class="row" style="padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer" onclick="asignarCliente(S.clientes.find(x=>x.id==='${esc(c.id)}'))"><div class="grow"><b>${esc(c.nombre)}</b> <span class="small muted">${esc(c.telefono)}</span></div><span class="small muted">${esc(c.tipo)}</span></div>`).join('')}
+         <div class="small muted" style="margin:10px 0 0">…o cargalo nuevo:</div>
+         <label class="f">Nombre</label><input class="i" value="${esc(P.cliente_nombre)}" oninput="P.cliente_nombre=this.value">
+         <label class="f">Teléfono / WhatsApp</label><input class="i" inputmode="tel" value="${esc(P.telefono)}" oninput="P.telefono=this.value" placeholder="351 555 1234">
+         <label class="f">Dirección de entrega</label><input class="i" value="${esc(P.direccion)}" oninput="P.direccion=this.value" placeholder="Calle 123, barrio">`}
+    </div>
+
+    <div class="card">
+      <div class="row"><h3 class="grow" style="font-size:19px">Productos</h3></div>
+      <div class="seg" style="margin:10px 0">
+        ${[['transferencia','Transferencia'],['tarjeta','Tarjeta 6 cuotas'],['mayorista','Mayorista']].map(([k,l]) => `<button class="${P.tipo_precio===k?'on':''}" onclick="cambiarTipo('${k}')">${l}</button>`).join('')}
+      </div>
+      ${P.items.length ? P.items.map((it, i) => `
+        <div class="item">
+          <div class="grow"><div style="font-weight:700;font-size:15px">${esc(it.nombre)}${it.medida ? ' · ' + esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div>
+            <div class="small muted">${fmt(it.precio)} c/u${ver && S.rol==='admin' ? ' · costo ' + fmt(it.costo) : ''}</div></div>
+          <div class="stepper"><button onclick="cant(${i},-1)">−</button><input inputmode="numeric" value="${num(it.cantidad)}" onchange="P.items[${i}].cantidad=Math.max(0,num(this.value));drawPedido()"><button onclick="cant(${i},1)">+</button></div>
+        </div>`).join('') : `<div class="small muted" style="padding:6px 0">Todavía no hay productos.</div>`}
+      <div class="row wrap" style="margin-top:10px">
+        <button class="btn ghost sm grow" onclick="P._pick=!P._pick;P._calc=false;drawPedido()">＋ Agregar producto</button>
+        <button class="btn ghost sm grow" onclick="P._calc=!P._calc;P._pick=false;drawPedido()">📐 Calcular por m²</button>
+      </div>
+      ${P._pick ? pickerHTML() : ''}
+      ${P._calc ? calcHTML() : ''}
+      <div class="sep"></div>
+      ${P.tipo_precio==='tarjeta' ? `<div class="tot small muted"><span>6 cuotas de</span><span>${fmt(t.total/6)}</span></div>` : ''}
+      <div class="tot main"><span>Total</span><span>${fmt(t.total)}</span></div>
+      ${S.rol==='admin' || S.rol==='ventas' ? `<div class="tot small muted"><span>Ganancia estimada${P.tipo_precio==='tarjeta'?' (desc. comisión)':''}</span><span>${fmt(t.ganancia)}</span></div>` : ''}
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:19px;margin-bottom:8px">Estado</h3>
+      <div class="estado-steps">${ESTADOS.map(e => `<button class="${P.estado===e?'on':''}" onclick="P.estado='${e}';drawPedido()">${e}</button>`).join('')}</div>
+      <label class="f">Día de entrega</label>
+      <div class="chips" style="flex-wrap:wrap">${entregas.map(d => `<button class="chip ${P.fecha_entrega===d?'on':''}" onclick="P.fecha_entrega=P.fecha_entrega==='${d}'?'':'${d}';drawPedido()">${fechaCorta(d)}</button>`).join('')}
+        <input type="date" class="chip" style="padding:5px 10px" value="${esc(P.fecha_entrega)}" onchange="P.fecha_entrega=this.value;drawPedido()"></div>
+      <div class="row" style="gap:10px">
+        <div class="grow"><label class="f">Medio de pago</label><select class="i" onchange="P.medio_pago=this.value">${MEDIOS.map(m => `<option ${P.medio_pago===m?'selected':''}>${m}</option>`).join('')}</select></div>
+        <div class="grow"><label class="f">Origen</label><select class="i" onchange="P.origen=this.value">${ORIGENES.map(m => `<option ${P.origen===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      </div>
+      <label class="row" style="margin-top:12px;gap:10px;font-weight:600"><input type="checkbox" style="width:22px;height:22px" ${P.cobrado?'checked':''} onchange="P.cobrado=this.checked"> Ya está cobrado</label>
+      <label class="f">Notas</label><textarea class="i" oninput="P.notas=this.value" placeholder="Ej: tocar timbre B, paga al recibir, quiere factura…">${esc(P.notas)}</textarea>
+    </div>
+
+    ${P.telefono ? `<a class="btn wa block" target="_blank" href="${waLink(P.telefono, textoPresupuesto())}">💬 Mandar presupuesto por WhatsApp</a>` : ''}
+  `;
+  openSheet(P.id ? 'Pedido' : 'Nuevo pedido', html,
+    `<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" onclick="guardarPedido()">Guardar pedido</button>`);
+}
+function drawPedidoKeep(focusId){
+  const pos = $(focusId) ? $(focusId).selectionStart : null;
+  drawPedido();
+  const el = $(focusId); if (el){ el.focus(); if (pos !== null) el.setSelectionRange(pos, pos); }
+}
+function cant(i, d){ P.items[i].cantidad = Math.max(0, num(P.items[i].cantidad) + d); if (!P.items[i].cantidad) P.items.splice(i,1); drawPedido(); }
+function cambiarTipo(k){
+  P.tipo_precio = k;
+  P.items.forEach(it => { if (it.pid){ const pr = S.productos.find(x => String(x.id) === String(it.pid)); if (pr) it.precio = precioUnit(pr.costo, k); } });
+  if (k === 'tarjeta') P.medio_pago = 'Tarjeta / Mercado Pago';
+  drawPedido();
+}
+function pickerHTML(){
+  return `<div class="prod-pick" style="margin-top:10px">${grupos().map(g => `
+    <div class="pp"><div class="n">${esc(g.nombre)}</div>
+      <div class="sizes">${g.tams.map(p => `<button onclick="agregarItem('${esc(p.id)}')">${esc(p.medida)} ${esc(g.unidad)}<small>${fmt(precioUnit(p.costo, P.tipo_precio))}</small></button>`).join('')}</div>
+    </div>`).join('')}
+    <div class="pp"><div class="n">Otro producto (a pedido)</div>
+      <div class="row" style="margin-top:8px"><input class="i grow" id="otroN" placeholder="Nombre y medida"><input class="i" id="otroP" style="width:110px" inputmode="numeric" placeholder="Precio"></div>
+      <div class="row" style="margin-top:6px"><input class="i grow" id="otroC" inputmode="numeric" placeholder="Costo de fábrica (para la ganancia)"><button class="btn sm" onclick="agregarOtro()">Agregar</button></div>
+    </div></div>`;
+}
+function agregarItem(pid){
+  const p = S.productos.find(x => String(x.id) === String(pid)); if (!p) return;
+  const ex = P.items.find(i => String(i.pid) === String(pid));
+  if (ex) ex.cantidad = num(ex.cantidad) + 1;
+  else P.items.push({ pid:p.id, nombre:p.nombre, medida:num(p.medida), unidad:p.unidad || unidadDe(p.nombre,p.linea), cantidad:1, precio:precioUnit(p.costo, P.tipo_precio), costo:num(p.costo) });
+  drawPedido();
+}
+function agregarOtro(){
+  const n = $('otroN').value.trim(); if (!n) return toast('Poné el nombre');
+  P.items.push({ pid:'', nombre:n, medida:'', unidad:'', cantidad:1, precio:num($('otroP').value), costo:num($('otroC').value) });
+  drawPedido();
+}
+
+/* Calculadora por m²: elige la combinación de baldes más barata que cubra lo necesario */
+let CALC = { tipo:'techo', m2:'', manos:2, prod:'' };
+function calcHTML(){
+  const gs = grupos().filter(g => CALC.tipo === 'techo' ? /membrana/i.test(g.nombre) : /látex|latex/i.test(g.nombre));
+  if (!gs.find(g => g.nombre === CALC.prod)) CALC.prod = (gs.find(g => /Poliuretánica$|Profesional/.test(g.nombre)) || gs[0] || {}).nombre || '';
+  const rend = CALC.tipo === 'techo' ? 1.2 : 0.1; // kg/m² por mano (membrana) · L/m² por mano (látex ≈10 m²/L)
+  const need = Math.ceil(num(CALC.m2) * rend * num(CALC.manos));
+  const g = gs.find(x => x.nombre === CALC.prod);
+  const combo = g && need ? mejorCombo(g.tams, need) : null;
+  return `<div class="calc">
+    <div class="seg" style="margin-bottom:8px"><button class="${CALC.tipo==='techo'?'on':''}" onclick="CALC.tipo='techo';drawPedido()">🛡️ Techo / muro</button><button class="${CALC.tipo==='pared'?'on':''}" onclick="CALC.tipo='pared';drawPedido()">🎨 Paredes</button></div>
+    <div class="row"><div class="grow"><label class="f">m² a cubrir</label><input class="i" inputmode="decimal" id="calcM2" value="${esc(CALC.m2)}" oninput="CALC.m2=this.value;drawPedidoKeep('calcM2')"></div>
+      <div style="width:110px"><label class="f">Manos</label><select class="i" onchange="CALC.manos=this.value;drawPedido()">${[1,2,3].map(n => `<option ${num(CALC.manos)===n?'selected':''}>${n}</option>`).join('')}</select></div></div>
+    <label class="f">Producto</label><select class="i" onchange="CALC.prod=this.value;drawPedido()">${gs.map(x => `<option ${x.nombre===CALC.prod?'selected':''}>${esc(x.nombre)}</option>`).join('')}</select>
+    ${need ? `<div style="margin-top:10px"><b>Necesita ≈ ${need} ${CALC.tipo==='techo'?'kg':'L'}</b> <span class="small muted">(${CALC.tipo==='techo'?'~1,2 kg/m² por mano':'~10 m²/L por mano'}; confirmar según estado de la superficie)</span></div>
+      ${combo ? `<div class="small" style="margin:6px 0 10px">Combinación más conveniente: <b>${combo.items.map(c => c.n + '× ' + c.p.medida + (g.unidad||'')).join(' + ')}</b> = ${fmt(combo.precio)}</div>
+      <button class="btn brand sm block" onclick='aplicarCombo(${JSON.stringify(combo.items.map(c => [c.p.id, c.n]))})'>Agregar al pedido</button>` : ''}` : ''}
+  </div>`;
+}
+function mejorCombo(tams, need){
+  // programación dinámica: mínimo precio para llegar a >= need unidades
+  const max = need + Math.max(...tams.map(t => num(t.medida)));
+  const best = Array(max + 1).fill(null); best[0] = { precio:0, pick:[] };
+  for (let q = 0; q <= max; q++){
+    if (!best[q]) continue;
+    tams.forEach((t, k) => {
+      const nq = q + num(t.medida); if (nq > max) return;
+      const pr = best[q].precio + precioUnit(t.costo, P ? P.tipo_precio : 'transferencia');
+      if (!best[nq] || pr < best[nq].precio) best[nq] = { precio:pr, pick:best[q].pick.concat(k) };
+    });
+  }
+  let op = null; for (let q = need; q <= max; q++) if (best[q] && (!op || best[q].precio < op.precio)) op = best[q];
+  if (!op) return null;
+  const cnt = {}; op.pick.forEach(k => cnt[k] = (cnt[k]||0) + 1);
+  return { precio:op.precio, items:Object.keys(cnt).map(k => ({ p:tams[k], n:cnt[k] })).sort((a,b) => num(b.p.medida) - num(a.p.medida)) };
+}
+function aplicarCombo(arr){
+  arr.forEach(([pid, n]) => { for (let i = 0; i < n; i++) agregarItemSilent(pid); });
+  P._calc = false; drawPedido(); toast('Agregado al pedido');
+}
+function agregarItemSilent(pid){
+  const p = S.productos.find(x => String(x.id) === String(pid)); if (!p) return;
+  const ex = P.items.find(i => String(i.pid) === String(pid));
+  if (ex) ex.cantidad = num(ex.cantidad) + 1;
+  else P.items.push({ pid:p.id, nombre:p.nombre, medida:num(p.medida), unidad:p.unidad || unidadDe(p.nombre,p.linea), cantidad:1, precio:precioUnit(p.costo, P.tipo_precio), costo:num(p.costo) });
+}
+function textoPresupuesto(){
+  const t = calcPedido(P);
+  const nombre = (P.cliente_nombre || '').split(' ')[0];
+  const lineas = P.items.map(i => `• ${i.cantidad}× ${i.nombre}${i.medida ? ' ' + i.medida + ' ' + (i.unidad||'') : ''} — ${fmt(i.precio * i.cantidad)}`).join('\n');
+  let pago = P.tipo_precio === 'tarjeta' ? `💳 Total: ${fmt(t.total)} en hasta 6 cuotas sin interés de ${fmt(t.total/6)}`
+           : P.tipo_precio === 'mayorista' ? `Total mayorista: ${fmt(t.total)}`
+           : `💰 Total pagando por transferencia: *${fmt(t.total)}*`;
+  const ent = P.fecha_entrega ? `\n🚚 Te lo llevamos el ${fechaCorta(P.fecha_entrega).replace('Mar','martes').replace('Vie','viernes')}.` : '\n🚚 Entregamos martes y viernes, envío gratis dentro de Circunvalación.';
+  return `¡Hola${nombre ? ' ' + nombre : ''}! Te paso el presupuesto 👇\n\n${lineas}\n\n${pago}${ent}\n\n¿Lo confirmamos?`;
+}
+async function guardarPedido(){
+  if (!P.cliente_nombre.trim()) return toast('Falta el nombre del cliente');
+  // crea o actualiza el cliente
+  let cli = P.cliente_id ? S.clientes.find(c => String(c.id) === String(P.cliente_id)) : null;
+  if (!cli){
+    cli = S.clientes.find(c => P.telefono && telWa(c.telefono) === telWa(P.telefono));
+    if (!cli){
+      cli = { alta:hoy(), nombre:P.cliente_nombre.trim(), telefono:P.telefono, direccion:P.direccion, zona:'', tipo:P.tipo_precio==='mayorista'?'Mayorista':'Minorista', origen:P.origen, estado_prospecto:'', proximo_contacto:'', notas:'' };
+      try{ await guardar('Clientes', cli); }catch(e){ return; }
+    }
+    P.cliente_id = cli.id;
+  } else if (P.direccion && P.direccion !== cli.direccion){
+    try{ await guardar('Clientes', { id:cli.id, direccion:P.direccion }); }catch(e){}
+  }
+  const t = calcPedido(P);
+  const fila = { id:P.id, fecha:P.fecha || hoy(), cliente_id:P.cliente_id, cliente_nombre:P.cliente_nombre.trim(), telefono:P.telefono, direccion:P.direccion,
+    tipo_precio:P.tipo_precio, items:JSON.stringify(P.items), total:t.total, costo_total:t.costo_total, comision:t.comision, ganancia:t.ganancia,
+    estado:P.estado, fecha_entrega:P.fecha_entrega, medio_pago:P.medio_pago, cobrado:P.cobrado, origen:P.origen, notas:P.notas };
+  if (fila.estado === 'Confirmado' && !fila.fecha_entrega) toast('Ojo: está confirmado pero sin día de entrega');
+  try{ await guardar('Pedidos', fila); }catch(e){ return; }
+  closeSheet(); render(); toast('Pedido guardado ✓');
+}
+
+/* ----------------------------- CLIENTES ----------------------------- */
+VIEWS.clientes = () => {
+  const q = UI.cliBusca.toLowerCase();
+  const filtros = ['Todos','Minorista','Mayorista','Prospecto mayorista','Recontactar'];
+  let lista = S.clientes.filter(c => {
+    if (UI.cliFiltro === 'Recontactar') return c.proximo_contacto && c.proximo_contacto <= hoy();
+    return UI.cliFiltro === 'Todos' || c.tipo === UI.cliFiltro;
+  }).filter(c => !q || (c.nombre + ' ' + c.telefono + ' ' + c.direccion + ' ' + c.zona).toLowerCase().includes(q));
+  if (UI.cliFiltro === 'Prospecto mayorista' || UI.cliFiltro === 'Recontactar') lista.sort((a,b) => String(a.proximo_contacto||'9').localeCompare(String(b.proximo_contacto||'9')));
+  else lista.sort((a,b) => String(a.nombre).localeCompare(String(b.nombre)));
+  const cuenta = f => f === 'Recontactar' ? S.clientes.filter(c => c.proximo_contacto && c.proximo_contacto <= hoy()).length : f === 'Todos' ? S.clientes.length : S.clientes.filter(c => c.tipo === f).length;
+  return `
+    <div class="search"><input class="i" placeholder="Buscar por nombre, teléfono, zona" value="${esc(UI.cliBusca)}" oninput="UI.cliBusca=this.value;renderLista()"></div>
+    <div class="chips">${filtros.map(f => `<button class="chip ${UI.cliFiltro===f?'on':''}" onclick="UI.cliFiltro='${f}';render()">${f === 'Prospecto mayorista' ? 'Prospectos' : f} · ${cuenta(f)}</button>`).join('')}</div>
+    <div id="lista">${lista.length ? lista.map(c => {
+      const peds = S.pedidos.filter(p => String(p.cliente_id) === String(c.id) && VENDIDO.includes(p.estado));
+      const tot = peds.reduce((s,p) => s + num(p.total), 0);
+      return `<div class="card list-item" onclick="formCliente('${esc(c.id)}')">
+        <div class="row"><div class="grow name">${esc(c.nombre)}</div><span class="small muted">${esc(c.tipo === 'Prospecto mayorista' ? (c.estado_prospecto || 'Sin contactar') : c.tipo)}</span></div>
+        <div class="small muted" style="margin-top:3px">${esc(c.telefono)}${c.zona ? ' · ' + esc(c.zona) : ''}</div>
+        <div class="row small" style="margin-top:6px"><div class="grow muted">${peds.length ? peds.length + ' compra' + (peds.length>1?'s':'') + ' · ' + fmt(tot) : 'Sin compras'}${c.proximo_contacto ? ' · 📞 ' + fechaCorta(c.proximo_contacto) : ''}</div>
+          ${c.telefono ? `<a class="btn wa sm" target="_blank" onclick="event.stopPropagation()" href="${waLink(c.telefono,'')}">WhatsApp</a>` : ''}</div>
+      </div>`; }).join('') : `<div class="empty">No hay clientes en esta lista.</div>`}</div>
+    <button class="btn brand fab" onclick="formCliente()">＋ Cliente</button>`;
+};
+function formCliente(id){
+  const c = id ? { ...S.clientes.find(x => String(x.id) === String(id)) } : { alta:hoy(), nombre:'', telefono:'', direccion:'', zona:'', tipo:UI.cliFiltro==='Prospecto mayorista'?'Prospecto mayorista':'Minorista', origen:'Meta / WhatsApp', estado_prospecto:'Sin contactar', proximo_contacto:'', notas:'' };
+  window.C = c;
+  const peds = id ? S.pedidos.filter(p => String(p.cliente_id) === String(id)).sort((a,b) => String(b.fecha).localeCompare(String(a.fecha))) : [];
+  const html = `
+    <div class="card">
+      <label class="f">Nombre / negocio</label><input class="i" value="${esc(c.nombre)}" oninput="C.nombre=this.value">
+      <label class="f">Teléfono / WhatsApp</label><input class="i" inputmode="tel" value="${esc(c.telefono)}" oninput="C.telefono=this.value">
+      <label class="f">Dirección</label><input class="i" value="${esc(c.direccion)}" oninput="C.direccion=this.value">
+      <label class="f">Zona / barrio / ciudad</label><input class="i" value="${esc(c.zona)}" oninput="C.zona=this.value">
+      <div class="row" style="gap:10px"><div class="grow"><label class="f">Tipo</label><select class="i" onchange="C.tipo=this.value;$('prospBox').classList.toggle('hidden',this.value!=='Prospecto mayorista')">${TIPOS_CLI.map(t => `<option ${c.tipo===t?'selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="grow"><label class="f">Origen</label><select class="i" onchange="C.origen=this.value">${ORIGENES.map(t => `<option ${c.origen===t?'selected':''}>${t}</option>`).join('')}</select></div></div>
+      <div id="prospBox" class="${c.tipo==='Prospecto mayorista'?'':'hidden'}">
+        <label class="f">Estado del contacto</label><select class="i" onchange="C.estado_prospecto=this.value">${ESTADOS_PROSP.map(t => `<option ${c.estado_prospecto===t?'selected':''}>${t}</option>`).join('')}</select>
+      </div>
+      <label class="f">Volver a contactar el día</label><input type="date" class="i" value="${esc(c.proximo_contacto)}" onchange="C.proximo_contacto=this.value">
+      <label class="f">Notas</label><textarea class="i" oninput="C.notas=this.value" placeholder="Qué compró, qué le interesa, con quién hablar…">${esc(c.notas)}</textarea>
+      ${c.telefono ? `<div class="row" style="margin-top:12px"><a class="btn wa sm grow" target="_blank" href="${waLink(c.telefono,'')}">💬 WhatsApp</a><a class="btn ghost sm grow" href="tel:${esc(String(c.telefono).replace(/\s/g,''))}">📞 Llamar</a></div>` : ''}
+    </div>
+    ${id ? `<div class="card"><div class="row"><h3 class="grow" style="font-size:19px">Pedidos</h3><button class="btn brand sm" onclick="formPedido(null,'${esc(id)}')">＋ Pedido</button></div>
+      ${peds.length ? peds.map(p => `<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="formPedido('${esc(p.id)}')"><div class="grow small">${fechaCorta(p.fecha)}</div><span class="badge b-${esc(p.estado)}">${esc(p.estado)}</span><b style="margin-left:8px">${fmt(p.total)}</b></div>`).join('') : '<div class="small muted" style="margin-top:6px">Todavía no hay pedidos.</div>'}</div>` : ''}`;
+  openSheet(id ? 'Cliente' : 'Nuevo cliente', html, `<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" onclick="guardarCliente()">Guardar</button>`);
+}
+async function guardarCliente(){
+  if (!C.nombre.trim()) return toast('Falta el nombre');
+  try{ await guardar('Clientes', C); }catch(e){ return; }
+  closeSheet(); render(); toast('Cliente guardado ✓');
+}
+
+/* ----------------------------- REPARTO ----------------------------- */
+VIEWS.reparto = () => {
+  const dias = proximosReparto(3);
+  const conPedidos = [...new Set(S.pedidos.filter(p => p.estado === 'Confirmado' && p.fecha_entrega).map(p => String(p.fecha_entrega).slice(0,10)))].filter(d => d < hoy());
+  const opciones = [...new Set([...conPedidos, hoy(), ...dias])].sort();
+  if (!UI.repFecha) UI.repFecha = S.pedidos.some(p => p.estado==='Confirmado' && String(p.fecha_entrega).slice(0,10) === hoy()) ? hoy() : dias[0];
+  const lista = S.pedidos.filter(p => String(p.fecha_entrega).slice(0,10) === UI.repFecha && (p.estado === 'Confirmado' || p.estado === 'Entregado'))
+    .sort((a,b) => (a.estado === 'Entregado') - (b.estado === 'Entregado'));
+  const pend = lista.filter(p => p.estado === 'Confirmado');
+  const aCobrar = lista.filter(p => !(p.cobrado === true || String(p.cobrado) === 'true')).reduce((s,p) => s + num(p.total), 0);
+  const ruta = pend.filter(p => p.direccion).map(p => encodeURIComponent(p.direccion + ', Córdoba'));
+  const rutaLink = ruta.length ? 'https://www.google.com/maps/dir/' + ruta.join('/') : '';
+  return `
+    <div class="chips">${opciones.map(d => `<button class="chip ${UI.repFecha===d?'on':''}" onclick="UI.repFecha='${d}';render()">${d===hoy()?'Hoy · ':''}${fechaCorta(d)}${d<hoy()?' ⚠️':''}</button>`).join('')}</div>
+    <div class="kpis"><div class="kpi"><div class="l">Entregas pendientes</div><div class="v">${pend.length} / ${lista.length}</div></div>
+      <div class="kpi"><div class="l">A cobrar en la calle</div><div class="v">${fmt(aCobrar)}</div></div></div>
+    ${rutaLink ? `<a class="btn ink block" style="margin-bottom:10px" target="_blank" href="${rutaLink}">🗺️ Abrir recorrido en Google Maps</a>` : ''}
+    ${lista.length ? lista.map(p => {
+      const items = parseItems(p.items);
+      const cob = p.cobrado === true || String(p.cobrado) === 'true';
+      const ent = p.estado === 'Entregado';
+      return `<div class="card" style="${ent?'opacity:.6':''}">
+        <div class="row"><div class="grow name" style="font-weight:700;font-size:17px">${esc(p.cliente_nombre)}</div><span class="badge b-${esc(p.estado)}">${ent?'Entregado ✓':'Pendiente'}</span></div>
+        <a class="small" style="display:block;margin:4px 0 8px;color:var(--info)" target="_blank" href="${mapsLink(p.direccion||'')}">📍 ${esc(p.direccion || 'Sin dirección — preguntar')}</a>
+        <div style="font-size:15px;line-height:1.5">${items.map(i => `<div>• <b>${num(i.cantidad)}×</b> ${esc(i.nombre)} ${i.medida ? esc(i.medida) + ' ' + esc(i.unidad||'') : ''}</div>`).join('')}</div>
+        ${p.notas ? `<div class="small" style="margin-top:6px;background:#fff8e6;padding:6px 8px;border-radius:8px">📝 ${esc(p.notas)}</div>` : ''}
+        <div class="row" style="margin-top:10px"><div class="grow"><b style="font-size:18px">${fmt(p.total)}</b> <span class="small muted">${esc(p.medio_pago||'')}</span></div>
+          <span class="badge ${cob?'b-cobrado':'b-debe'}">${cob?'Cobrado':'Cobrar al entregar'}</span></div>
+        <div class="row wrap" style="margin-top:10px">
+          ${p.telefono ? `<a class="btn ghost sm" href="tel:${esc(String(p.telefono).replace(/\s/g,''))}">📞</a><a class="btn wa sm" target="_blank" href="${waLink(p.telefono, '¡Hola! Soy de Deco & Vita, estoy en camino con tu pedido 🚚')}">💬 Aviso</a>` : ''}
+          ${!cob ? `<button class="btn ghost sm grow" onclick="marcarCobrado('${esc(p.id)}')">💵 Cobrado</button>` : ''}
+          ${!ent ? `<button class="btn ok sm grow" onclick="marcarEntregado('${esc(p.id)}')">✓ Entregado</button>` : ''}
+        </div>
+      </div>`; }).join('') : `<div class="empty">No hay entregas para este día.</div>`}`;
+};
+async function marcarEntregado(id){
+  const p = S.pedidos.find(x => String(x.id) === String(id));
+  const fila = { id, estado:'Entregado', cobrado:p.cobrado, notas:p.notas };
+  if (S.rol !== 'reparto') Object.assign(fila, { cliente_nombre:p.cliente_nombre });
+  try{ await guardar('Pedidos', fila); }catch(e){ return; }
+  render(); toast('Entregado ✓');
+}
+async function marcarCobrado(id){
+  const p = S.pedidos.find(x => String(x.id) === String(id));
+  try{ await guardar('Pedidos', { id, cobrado:true, estado:p.estado, notas:p.notas }); }catch(e){ return; }
+  render(); toast('Cobrado ✓');
+}
+
+/* ----------------------------- FÁBRICA ----------------------------- */
+VIEWS.fabrica = () => {
+  const dias = proximosReparto(3);
+  if (!UI.fabFecha) UI.fabFecha = dias[0];
+  const peds = S.pedidos.filter(p => p.estado === 'Confirmado' && String(p.fecha_entrega).slice(0,10) === UI.fabFecha);
+  const sinDia = S.pedidos.filter(p => p.estado === 'Confirmado' && !p.fecha_entrega);
+  const suma = {};
+  peds.forEach(p => parseItems(p.items).forEach(i => {
+    const k = i.nombre + '|' + (i.medida||'') + '|' + (i.unidad||'');
+    (suma[k] = suma[k] || { nombre:i.nombre, medida:i.medida, unidad:i.unidad, cantidad:0, costo:num(i.costo) }).cantidad += num(i.cantidad);
+  }));
+  const filas = Object.values(suma).sort((a,b) => a.nombre.localeCompare(b.nombre) || num(a.medida) - num(b.medida));
+  const costo = filas.reduce((s,f) => s + f.costo * f.cantidad, 0);
+  const texto = `Hola! Pedido de Deco & Vita para retirar el ${fechaCorta(UI.fabFecha)}:\n\n` + filas.map(f => `• ${f.cantidad} × ${f.nombre} ${f.medida ? f.medida + ' ' + (f.unidad||'') : ''}`).join('\n') + '\n\nGracias!';
+  return `
+    <div class="chips">${dias.map(d => `<button class="chip ${UI.fabFecha===d?'on':''}" onclick="UI.fabFecha='${d}';render()">Para ${fechaCorta(d)}</button>`).join('')}</div>
+    ${sinDia.length ? `<div class="card" style="background:#fff4e0"><b>⚠️ ${sinDia.length} pedido${sinDia.length>1?'s':''} confirmado${sinDia.length>1?'s':''} sin día de entrega.</b> <span class="small">No entran en esta lista hasta que les pongas día.</span></div>` : ''}
+    <div class="card">
+      <div class="row"><h3 class="grow" style="font-size:19px">Lo que hay que pedir</h3><span class="small muted">${peds.length} pedido${peds.length!==1?'s':''}</span></div>
+      ${filas.length ? filas.map(f => `<div class="item"><div class="grow"><b>${esc(f.nombre)}</b> <span class="muted">${esc(f.medida)} ${esc(f.unidad||'')}</span></div><div class="big">${f.cantidad}</div></div>`).join('') : `<div class="small muted" style="padding:8px 0">No hay pedidos confirmados para ese día.</div>`}
+      ${filas.length && S.rol === 'admin' ? `<div class="sep"></div><div class="tot"><span class="muted">A pagar a fábrica (costo)</span><b>${fmt(costo)}</b></div>` : ''}
+    </div>
+    ${filas.length ? `<div class="row"><button class="btn ghost grow" onclick='copiar(${JSON.stringify(texto)})'>Copiar</button><a class="btn wa grow" target="_blank" href="https://wa.me/?text=${encodeURIComponent(texto)}">💬 Mandar a fábrica</a></div>` : ''}`;
+};
+
+/* ----------------------------- RESUMEN (admin) ----------------------------- */
+VIEWS.resumen = () => {
+  const ahora = new Date();
+  if (!UI.mes) UI.mes = isoDate(ahora).slice(0,7);
+  const meses = []; for (let i = 0; i < 4; i++){ const d = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1); meses.push(isoDate(d).slice(0,7)); }
+  const delMes = S.pedidos.filter(p => String(p.fecha).slice(0,7) === UI.mes);
+  const vend = delMes.filter(p => VENDIDO.includes(p.estado));
+  const tot = k => vend.reduce((s,p) => s + num(calcPedido(p)[k]), 0);
+  const ventas = tot('total'), bruta = tot('ganancia');
+  const gastosMes = S.gastos.filter(g => String(g.fecha).slice(0,7) === UI.mes);
+  const gastos = gastosMes.reduce((s,g) => s + num(g.monto), 0);
+  const neto = bruta - gastos;
+  const obj = cfg('OBJETIVO_NETO_MES', 3000000), socios = cfg('SOCIOS', 3);
+  const pct = Math.max(0, Math.min(100, neto / obj * 100));
+  const cerrados = delMes.filter(p => p.estado !== 'Consulta' && p.estado !== 'Presupuestado').length;
+  const cierre = cerrados ? Math.round(vend.length / cerrados * 100) : 0;
+  const pubGasto = gastosMes.filter(g => g.categoria === 'Publicidad').reduce((s,g) => s + num(g.monto), 0);
+  const deuda = S.pedidos.filter(p => VENDIDO.includes(p.estado) && !(p.cobrado === true || String(p.cobrado) === 'true'));
+  const porOrigen = {}; delMes.forEach(p => { const o = p.origen || 'Otro'; porOrigen[o] = porOrigen[o] || { c:0, v:0 }; porOrigen[o].c++; if (VENDIDO.includes(p.estado)) porOrigen[o].v++; });
+  const maxO = Math.max(1, ...Object.values(porOrigen).map(x => x.c));
+  // proyección lineal del mes
+  const [y, m] = UI.mes.split('-').map(Number); const diasMes = new Date(y, m, 0).getDate();
+  const diaHoy = UI.mes === isoDate(ahora).slice(0,7) ? ahora.getDate() : diasMes;
+  const proy = diaHoy ? neto / diaHoy * diasMes : 0;
+  return `
+    <div class="chips">${meses.map(mm => { const [a,b] = mm.split('-'); return `<button class="chip ${UI.mes===mm?'on':''}" onclick="UI.mes='${mm}';render()">${MESES[num(b)-1]} ${a}</button>`; }).join('')}</div>
+    <div class="card">
+      <div class="small muted" style="font-weight:600">Ganancia neta del mes</div>
+      <div class="row" style="align-items:baseline"><div class="cond grow" style="font-size:38px;font-weight:800">${fmt(neto)}</div><div class="small muted">objetivo ${fmt(obj)}</div></div>
+      <div class="bar" style="margin:8px 0"><div style="width:${pct}%"></div></div>
+      <div class="row small"><div class="grow muted">${Math.round(pct)}% · proyección a fin de mes ${fmt(proy)}</div><div><b>${fmt(neto / socios)}</b> c/u (÷${socios})</div></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">Ventas</div><div class="v">${fmt(ventas)}</div></div>
+      <div class="kpi"><div class="l">Ganancia bruta</div><div class="v">${fmt(bruta)}</div></div>
+      <div class="kpi"><div class="l">Pedidos vendidos</div><div class="v">${vend.length}</div></div>
+      <div class="kpi"><div class="l">Ticket promedio</div><div class="v">${fmt(vend.length ? ventas / vend.length : 0)}</div></div>
+      <div class="kpi"><div class="l">Gastos</div><div class="v">${fmt(gastos)}</div></div>
+      <div class="kpi"><div class="l">Publicidad por venta</div><div class="v">${fmt(vend.length ? pubGasto / vend.length : 0)}</div></div>
+    </div>
+    <div class="card">
+      <div class="row"><h3 class="grow" style="font-size:19px">Consultas por origen</h3><span class="small muted">${delMes.length} consultas · cierre ${cierre}%</span></div>
+      ${Object.keys(porOrigen).length ? Object.entries(porOrigen).sort((a,b) => b[1].c - a[1].c).map(([o,x]) => `<div class="hbar"><div class="t">${esc(o)}</div><div class="b"><div style="width:${x.c/maxO*100}%"></div></div><div class="n">${x.v}/${x.c}</div></div>`).join('') : '<div class="small muted">Sin datos este mes.</div>'}
+      <div class="small muted" style="margin-top:6px">vendidos / consultas. El % de cierre cuenta solo las consultas que ya se definieron (vendidas o perdidas).</div>
+    </div>
+    <div class="card">
+      <div class="row"><h3 class="grow" style="font-size:19px">Falta cobrar</h3><b>${fmt(deuda.reduce((s,p) => s + num(p.total), 0))}</b></div>
+      ${deuda.slice(0,8).map(p => `<div class="row small" style="padding:7px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="formPedido('${esc(p.id)}')"><div class="grow">${esc(p.cliente_nombre)} <span class="muted">· ${esc(p.estado)} ${p.fecha_entrega ? fechaCorta(p.fecha_entrega) : ''}</span></div><b>${fmt(p.total)}</b></div>`).join('') || '<div class="small muted">Todo cobrado.</div>'}
+    </div>
+    <button class="btn ghost block" onclick="go('gastos')">Cargar gastos (publicidad, nafta…)</button>`;
+};
+
+/* ----------------------------- MÁS ----------------------------- */
+VIEWS.mas = () => {
+  const items = {
+    admin:   [['fabrica','🏭','Pedido a fábrica'],['respuestas','💬','Respuestas rápidas'],['gastos','💸','Gastos'],['productos','🏷️','Productos y costos'],['config','⚙️','Configuración']],
+    ventas:  [['respuestas','💬','Respuestas rápidas'],['config','⚙️','Configuración']],
+    reparto: [['config','⚙️','Configuración']],
+  }[S.rol];
+  return items.map(([k,ic,l]) => `<div class="card list-item row" onclick="go('${k}')"><span style="font-size:24px">${ic}</span><div class="grow name">${l}</div><span class="muted">›</span></div>`).join('')
+    + `<div class="row" style="margin-top:14px"><button class="btn ghost grow" onclick="refrescar()">↻ Actualizar datos</button><button class="btn ghost grow" onclick="salir()">Salir</button></div>
+       <div class="small muted" style="text-align:center;margin-top:14px">Rol: ${S.rol === 'admin' ? 'Administración' : S.rol === 'ventas' ? 'Ventas' : 'Reparto'}</div>`;
+};
+
+const PLANTILLAS = [
+  ['Primera respuesta', `¡Hola! Gracias por escribir a Deco & Vita 🙌\n¿Es para impermeabilizar un techo/muro 🛡️ o para pintar paredes 🎨?\nSi me pasás más o menos los m², te digo cuánto necesitás y el precio exacto.`],
+  ['Techo — recomendación', `Para tu techo te recomiendo la *Membrana Poliuretánica Dupaint*: es elástica, sella las filtraciones y aguanta sol y lluvia sin fisurarse.\nPara {m2} m² a 2 manos necesitás aprox. {cant} kg.\nTe queda en {precio} pagando por transferencia, con envío gratis dentro de Circunvalación. ¿Te lo preparo?`],
+  ['Paredes — recomendación', `Para paredes el que más recomendamos es el *Látex Profesional Dupaint*: cubre muy bien y rinde ~10 m² por litro por mano.\nPara {m2} m² a 2 manos son unos {cant} L → {precio} por transferencia.\nSi es cocina o baño te conviene el *Pro Lavable*. ¿Cuál te sirve?`],
+  ['Pago y envío', `💰 Transferencia: precio con 30% OFF (el más barato)\n💳 Tarjeta: hasta 6 cuotas sin interés\n🚚 Envío gratis dentro de Circunvalación, entregamos martes y viernes.\n¿Para qué día lo querés?`],
+  ['Confirmación', `¡Listo {nombre}! Quedó confirmado tu pedido ✅\nTe lo llevamos el {dia}. Cualquier cosa me escribís por acá.`],
+  ['Datos para transferir', `Te paso los datos para la transferencia:\nAlias: [COMPLETAR ALIAS]\nTitular: [COMPLETAR]\nCuando la hagas mandame el comprobante por acá y te confirmo el día de entrega 🙌`],
+  ['Seguimiento (no respondió)', `¡Hola {nombre}! ¿Pudiste ver el presupuesto? Esta semana tenemos entregas el martes y el viernes, si lo confirmás hoy entrás en la próxima 🚚`],
+  ['Después de la entrega', `¡Hola {nombre}! ¿Llegó todo bien? Si quedó buena la terminación, nos ayudás muchísimo mandándonos una foto 📸\nY si algún conocido necesita pintura o membrana, pasale este número 🙌`],
+  ['Mayorista — primer contacto', `¡Hola! Soy {tu nombre}, de Deco & Vita. Somos distribuidores de Mega Pinturas (Dupaint, Zi-Muro) en Córdoba.\nTenemos precios mayoristas en membranas y látex para reventa, con entrega en el local.\n¿Con quién puedo hablar para pasarle la lista?`],
+];
+VIEWS.respuestas = () => `<div class="small muted" style="margin-bottom:10px">Tocá <b>Copiar</b> y pegala en el chat. Reemplazá lo que está entre {llaves}.</div>` +
+  PLANTILLAS.map(([t, txt], i) => `<div class="card"><div class="row"><b class="grow">${esc(t)}</b><button class="btn ghost sm" onclick="copiar(PLANTILLAS[${i}][1])">Copiar</button></div><div class="tpl">${esc(txt)}</div></div>`).join('');
+
+/* ----------------------------- GASTOS (admin) ----------------------------- */
+VIEWS.gastos = () => {
+  const lista = [...S.gastos].sort((a,b) => String(b.fecha).localeCompare(String(a.fecha)));
+  return `<div class="card">
+      <h3 style="font-size:19px">Nuevo gasto</h3>
+      <div class="row" style="gap:10px"><div class="grow"><label class="f">Fecha</label><input type="date" class="i" id="gF" value="${hoy()}"></div>
+        <div class="grow"><label class="f">Monto</label><input class="i" id="gM" inputmode="numeric" placeholder="$"></div></div>
+      <label class="f">Categoría</label><select class="i" id="gC">${CAT_GASTOS.map(c => `<option>${c}</option>`).join('')}</select>
+      <label class="f">Nota</label><input class="i" id="gN" placeholder="Ej: Meta 1–15 nov">
+      <button class="btn brand block" style="margin-top:12px" onclick="guardarGasto()">Guardar gasto</button>
+    </div>
+    ${lista.map(g => `<div class="card row"><div class="grow"><b>${esc(g.categoria)}</b><div class="small muted">${fechaCorta(g.fecha)}${g.nota ? ' · ' + esc(g.nota) : ''}</div></div><b>${fmt(g.monto)}</b></div>`).join('') || '<div class="empty">Sin gastos cargados.</div>'}`;
+};
+async function guardarGasto(){
+  const monto = num($('gM').value); if (!monto) return toast('Poné el monto');
+  try{ await guardar('Gastos', { fecha:$('gF').value || hoy(), categoria:$('gC').value, monto, nota:$('gN').value }); }catch(e){ return; }
+  render(); toast('Gasto guardado ✓');
+}
+
+/* ----------------------------- PRODUCTOS (admin) ----------------------------- */
+VIEWS.productos = () => `<div class="small muted" style="margin-bottom:10px">Cuando la fábrica mande lista nueva, cambiá el costo acá. Los precios se recalculan solos (transferencia = costo × ${cfg('MARKUP',1.35)}).</div>` +
+  grupos().map(g => `<div class="card"><b>${esc(g.nombre)}</b>${g.tams.map(p => `
+    <div class="row" style="margin-top:8px"><div style="width:60px" class="small">${esc(p.medida)} ${esc(g.unidad)}</div>
+      <input class="i grow" inputmode="numeric" value="${num(p.costo)}" onchange="guardarCosto('${esc(p.id)}', this.value)">
+      <div class="small right" style="width:96px">${fmt(precioUnit(p.costo,'transferencia'))}<br><span class="muted">may. ${fmt(precioUnit(p.costo,'mayorista'))}</span></div></div>`).join('')}</div>`).join('');
+async function guardarCosto(id, v){
+  try{ await guardar('Productos', { id, costo:num(v) }); }catch(e){ return; }
+  render(); toast('Costo actualizado ✓');
+}
+
+/* ----------------------------- CONFIG ----------------------------- */
+VIEWS.config = () => `
+  <div class="card">
+    <h3 style="font-size:19px">Planilla conectada</h3>
+    <div class="small muted" style="margin:6px 0">${API ? '✅ Conectada a Google Sheets' : '⚠️ Modo prueba: los datos se guardan solo en este celular'}</div>
+    ${S.rol === 'admin' ? `<label class="f">URL de la aplicación web (Apps Script, termina en /exec)</label>
+      <input class="i" id="apiUrl" value="${esc(API)}" placeholder="https://script.google.com/macros/s/…/exec">
+      <div class="row" style="margin-top:10px"><button class="btn brand grow" onclick="conectar()">Guardar y conectar</button></div>
+      ${API ? `<label class="f">Link para pasarle a Abigail y al reparto (ya incluye la conexión)</label>
+      <div class="row"><input class="i grow" readonly value="${esc(linkInvitacion())}"><button class="btn ghost sm" onclick="copiar(linkInvitacion())">Copiar</button></div>` : ''}` : ''}
+  </div>
+  <div class="card small">
+    <b>Instalar en el celular</b>
+    <div class="muted" style="margin-top:6px">Android (Chrome): menú ⋮ → <i>Agregar a pantalla principal</i>.<br>iPhone (Safari): botón compartir → <i>Agregar a inicio</i>.</div>
+  </div>
+  ${!API ? `<button class="btn ghost block" onclick="if(confirm('¿Borrar los datos de prueba?')){LS.del('dv_demo');refrescar()}">Borrar datos de prueba</button>` : ''}`;
+function linkInvitacion(){ return location.origin + location.pathname + '?api=' + encodeURIComponent(API); }
+async function conectar(){
+  const u = $('apiUrl').value.trim();
+  if (u && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) return toast('La URL tiene que terminar en /exec');
+  API = u; LS.set('dv_api', u);
+  try{ const d = await cargar(PIN); Object.assign(S, d); toast(u ? 'Conectado ✓' : 'Modo prueba'); start(); }
+  catch(e){ toast('Conectó, pero el PIN no coincide con la planilla. Entrá de nuevo.'); salir(); }
+}
+
+/* ----------------------------- arranque ----------------------------- */
+(async function(){
+  if (PIN){
+    try{ const d = await cargar(PIN); Object.assign(S, d); start(); }
+    catch(e){ showLogin(); }
+  } else showLogin();
+  // refresco automático cada 2 minutos si la app está abierta
+  setInterval(() => { if (S.rol && API && !$('sheet').classList.contains('open') && document.visibilityState === 'visible') refrescar(true); }, 120000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.rol && API && !$('sheet').classList.contains('open')) refrescar(true); });
+})();
+</script>
+</body>
+</html>

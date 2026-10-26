@@ -1257,6 +1257,10 @@ const WA_NUMBER = "5493512514243";
 let API_URL = "";
 try { API_URL = localStorage.getItem('dv_api_url') || ""; } catch(e) {}
 
+// URL /exec del Apps Script de la app de ventas (03_web/app). Los pedidos que la
+// gente arma en el carrito entran solos a la planilla como "Consulta".
+const APP_VENTAS_URL = "";
+
 // IDs de productos desactivados localmente (fallback sin API)
 let DISABLED_IDS = new Set();
 
@@ -2000,9 +2004,11 @@ async function sendWhatsApp() {
   });
   const total = cart.reduce((s,c) => s + precio(c.costo).promo * c.qty, 0);
 
-  // ── META PIXEL: evento de conversión Purchase ──────────────
+  // ── META PIXEL: evento Lead ────────────────────────────────
+  // Mandar el pedido a WhatsApp NO es una compra: es un contacto calificado.
+  // La compra real se confirma después en la app de ventas.
   if (typeof fbq !== 'undefined') {
-    fbq('track', 'Purchase', {
+    fbq('track', 'Lead', {
       value: total,
       currency: 'ARS',
       contents: cart.map(item => ({
@@ -2013,6 +2019,14 @@ async function sendWhatsApp() {
       content_type: 'product',
       num_items: cart.reduce((s,c) => s + c.qty, 0)
     });
+  }
+
+  // ── MANDAR A LA APP DE VENTAS (entra como "Consulta" de origen Web) ──
+  if (APP_VENTAS_URL) {
+    try {
+      fetch(APP_VENTAS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'pedidoWeb', pedido:{ items: cart.map(item => ({ nom:item.nom, lts:item.lts, qty:item.qty, precio_unit:precio(item.costo).promo })) } }) });
+    } catch(e) {}
   }
 
   // ── GUARDAR EN GOOGLE SHEETS ───────────────────────────────
