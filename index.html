@@ -1257,11 +1257,9 @@ const WA_NUMBER = "5493512514243";
 let API_URL = "";
 try { API_URL = localStorage.getItem('dv_api_url') || ""; } catch(e) {}
 
-// Supabase de la app de ventas (/app). Los pedidos que la gente arma en el carrito
-// entran solos como "Consulta" de origen Web. La anon key es pública por diseño:
-// la función pedido_web solo puede crear consultas, no leer datos.
-const APP_SB_URL = "https://duoapizgrfvlpeoxgmiq.supabase.co";
-const APP_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1b2FwaXpncmZ2bHBlb3hnbWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NzgxNjgsImV4cCI6MjEwODU1NDE2OH0.UPoMufJ2Zo2hu2vjP7eTn9xuWu_icsNZ9yelHL53PZc";
+// URL /exec del Apps Script de la app de ventas (03_web/app). Los pedidos que la
+// gente arma en el carrito entran solos a la planilla como "Consulta".
+const APP_VENTAS_URL = "";
 
 // IDs de productos desactivados localmente (fallback sin API)
 let DISABLED_IDS = new Set();
@@ -1363,6 +1361,8 @@ const PRODUCTS = [
   {id:47,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:12,costo:38791},
   {id:48,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:20,costo:64555},
   {id:49,cat:"Membranas",nom:"Zi-Muro Membrana Frentes y Muros Poliuretánica",marca:"Zi-Muro",lts:24,costo:74020},
+  {id:144,cat:"Membranas",nom:"Zi-Muro Membrana Elastomérica+Caucho",marca:"Zi-Muro",lts:10,costo:25000},
+  {id:145,cat:"Membranas",nom:"Zi-Muro Membrana Elastomérica+Caucho",marca:"Zi-Muro",lts:20,costo:45000},
   {id:50,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:1,costo:7580},
   {id:51,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:4,costo:21090},
   {id:52,cat:"Latex",nom:"Dupaint Látex Premium Lavable Int/Ext",marca:"Dupaint",lts:10,costo:48453},
@@ -1390,9 +1390,9 @@ const PRODUCTS = [
   {id:74,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:4,costo:6630},
   {id:75,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:10,costo:15050},
   {id:76,cat:"Latex",nom:"Zi-Muro Látex Interior",marca:"Zi-Muro",lts:20,costo:23594},
-  {id:77,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:4,costo:5560},
-  {id:78,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:10,costo:11790},
-  {id:79,cat:"Latex",nom:"Látex Eco Int/Ext",marca:"-",lts:20,costo:19435},
+  {id:77,cat:"Latex",nom:"Pimak Látex Acrílico Int/Ext",marca:"Pimak",lts:4,costo:5560},
+  {id:78,cat:"Latex",nom:"Pimak Látex Acrílico Int/Ext",marca:"Pimak",lts:10,costo:11790},
+  {id:79,cat:"Latex",nom:"Pimak Látex Acrílico Int/Ext",marca:"Pimak",lts:20,costo:19435},
   {id:80,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:1,costo:6300},
   {id:81,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:4,costo:19680},
   {id:82,cat:"Latex",nom:"Duracril Látex Color Int/Ext Grupo 1",marca:"Duracril",lts:10,costo:56860},
@@ -1481,7 +1481,8 @@ const STAR_PRODUCTS = {
 const PUBLISHED_IDS = new Set([
   // --- MEMBRANAS (de mas barato a premium) ---
   32,33,34,35,          // 1) Zi-Muro Membrana Liquida (1/4/10/20)
-  // ESCALON 2: Zi-Muro con caucho -> PENDIENTE, agregar IDs cuando este cargada
+  26,27,28,             // Pimak Membrana Poliuretanica (4/10/20)  [linea economica]
+  144,145,              // ESCALON 2: Zi-Muro Membrana Elastomerica+Caucho (10/20)  [lista sep-26]
   21,22,23,24,          // 3) Dupaint Membrana Poliuretanica (1/4/10/20)  [24kg oculto: no está en lista sep-26]
   5,6,7,8,              // 4) Dupaint Membrana Poliuretanica+Elastomerica (1/4/10/20)  [24kg oculto: no está en lista sep-26]
   10,11,12,             // 5) Dupaint Membrana Caucho+Poliuretanica (4/10/20)
@@ -1489,6 +1490,7 @@ const PUBLISHED_IDS = new Set([
   70,71,72,73,          // Zi-Muro Latex Int/Ext (1/4/10/20)  [mas barato]
   66,67,68,69,          // Dupaint Latex Profesional (1/4/10/20)  [caballito]
   58,59,60,61,          // Dupaint Latex Pro Lavable (1/4/10/20)  [premium]
+  77,78,79,             // Pimak Latex Acrilico (lista: "Latex Eco Int-Ext") (4/10/20)  [linea economica]
 ]);
 
 // ============================================================
@@ -2024,14 +2026,10 @@ async function sendWhatsApp() {
   }
 
   // ── MANDAR A LA APP DE VENTAS (entra como "Consulta" de origen Web) ──
-  // Código corto que viaja en el mensaje de WhatsApp: con él se encuentra el pedido en la app
-  const ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let codigo = ''; for (let i = 0; i < 5; i++) codigo += ABC[Math.floor(Math.random() * ABC.length)];
-  if (APP_SB_URL && APP_SB_KEY) {
+  if (APP_VENTAS_URL) {
     try {
-      fetch(APP_SB_URL + '/rest/v1/rpc/pedido_web', { method:'POST', keepalive:true,
-        headers:{ 'Content-Type':'application/json', apikey:APP_SB_KEY, Authorization:'Bearer ' + APP_SB_KEY },
-        body: JSON.stringify({ codigo, items: cart.map(item => ({ nom:item.nom, lts:item.lts, unidad:(item.cat === 'Latex' ? 'L' : 'kg'), qty:item.qty, precio_unit:precio(item.costo).promo, costo:item.costo })) }) });
+      fetch(APP_VENTAS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ action:'pedidoWeb', pedido:{ items: cart.map(item => ({ nom:item.nom, lts:item.lts, qty:item.qty, precio_unit:precio(item.costo).promo })) } }) });
     } catch(e) {}
   }
 
@@ -2049,7 +2047,7 @@ async function sendWhatsApp() {
     cliente_tel:    '',
   });
 
-  const msg = `Hola! Quiero hacer el siguiente pedido 👇\n\n${lines.join('\n')}\n\n*Total transferencia: $${fmt(total)}*\n🧾 Código de pedido: *W-${codigo}*\n📦 Envío gratis (dentro del anillo de circunvalación, Córdoba)\n\n_Precios con 30% OFF por pago en transferencia bancaria_`;
+  const msg = `Hola! Quiero hacer el siguiente pedido 👇\n\n${lines.join('\n')}\n\n*Total transferencia: $${fmt(total)}*\n📦 Envío gratis (dentro del anillo de circunvalación, Córdoba)\n\n_Precios con 30% OFF por pago en transferencia bancaria_`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -2072,6 +2070,7 @@ const PHOTO_MAP = {
   "Dupaint Membrana Poliuretánica":                 "dupaint_membrana_pol.jpg",
   "Dupaint Membrana Frentes y Muros Pol.+Elast.":  "dupaint_membrana_frentes.jpg",
   "Zi-Muro Membrana Líquida":                      "zimuro_membrana_liquida.jpg",
+  "Zi-Muro Membrana Elastomérica+Caucho":         "zimuro_membrana_caucho.jpg",
   "Zi-Muro Tapa Goteras":                          "zimuro_tapa_goteras.jpg",
   "Zi-Muro Membrana Frentes y Muros Poliuretánica":"zimuro_membrana_frentes.jpg",
   "Pimak Membrana Poliuretánica":                  "pimak_membrana_pol.jpg",
@@ -2087,7 +2086,7 @@ const PHOTO_MAP = {
   "Zi-Muro Látex Color Grupo 2":                  "zimuro_latex_color.jpg",
   "Duracril Látex Color Int/Ext Grupo 1":         "duracril_latex_color.jpg",
   "Duracril Látex Color Int/Ext Grupo 2/3":       "duracril_latex_color.jpg",
-  "Látex Eco Int/Ext":                            "latex_eco.jpg",
+  "Pimak Látex Acrílico Int/Ext":                "pimak_latex.jpg",
   "Dupaint Masilla Sella Grietas/Juntas":         "dupaint_masilla.jpg",
   "Dupaint Esmalte Piso Lajas y Tejas":           "dupaint_esmalte_piso.jpg",
   "Dupaint Esmalte Acrílico para Chapas":         "dupaint_esmalte_chapas.jpg",
