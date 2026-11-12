@@ -915,7 +915,7 @@ footer { background:var(--dark); color:#aaa; padding:40px 24px 24px; margin-top:
 .hero-entradas { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:560px; margin:0 auto 14px; position:relative; animation:fadeUp .6s .3s ease both; }
 .hero-entrada { background:var(--cream); border:none; border-radius:12px; padding:14px 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; transition:transform .15s, box-shadow .15s; }
 .hero-entrada:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,93,38,.35); }
-.he-ico { font-size:26px; line-height:1; }
+.he-img { width:96px; height:96px; object-fit:contain; border-radius:10px; background:white; }
 .he-tit { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:20px; text-transform:uppercase; color:var(--dark); line-height:1.05; }
 .he-sub { font-size:12px; color:var(--gray); }
 .he-sub b { display:block; font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:900; color:var(--orange); }
@@ -1022,14 +1022,16 @@ body.on-product .float-wa { display:none; }
   <h1>Pintá más,<br>gastá <em>menos.</em></h1>
   <p>Precio directo de fábrica. Sin intermediarios, sin remarques. Envío gratis dentro del anillo de Córdoba.</p>
   <div class="hero-entradas">
-    <button class="hero-entrada" onclick="filterCat('Membranas')">
-      <span class="he-ico">🛡️</span><span class="he-tit">Techos y terrazas</span>
-      <span class="he-sub">Membranas 20 kg desde<b id="desdeMem"></b></span>
-      <span class="he-go">Ver membranas</span>
+    <button class="hero-entrada" onclick="openProduct(28)">
+      <img class="he-img" src="fotos/pimak_membrana_pol.webp" alt="Pimak Membrana Poliuretánica 20 kg" width="96" height="96">
+      <span class="he-tit">Techos y terrazas</span>
+      <span class="he-sub">Pimak Membrana 20 kg<b id="desdeMem"></b></span>
+      <span class="he-go">Ver membrana</span>
     </button>
-    <button class="hero-entrada" onclick="filterCat('Latex')">
-      <span class="he-ico">🎨</span><span class="he-tit">Paredes</span>
-      <span class="he-sub">Látex 20 L desde<b id="desdeLat"></b></span>
+    <button class="hero-entrada" onclick="openProduct(73)">
+      <img class="he-img" src="fotos/zimuro_latex_nobg.webp" alt="Zi-Muro Látex Int/Ext 20 L" width="96" height="96">
+      <span class="he-tit">Paredes</span>
+      <span class="he-sub">Zi-Muro Látex 20 L<b id="desdeLat"></b></span>
       <span class="he-go">Ver látex</span>
     </button>
   </div>
@@ -1062,7 +1064,7 @@ body.on-product .float-wa { display:none; }
   <div class="problemas-grid">
 
     <!-- CARD 1: Techo — foto izquierda, info derecha -->
-    <div class="problema-card techo" onclick="openProduct(8)">
+    <div class="problema-card techo" onclick="openProduct(28)">
       <div class="pc-foto">
         <img loading="lazy" decoding="async" src="banners/ctx_techo.webp" alt="Techo impermeabilizado">
         <div class="pc-foto-overlay"></div>
@@ -1070,12 +1072,12 @@ body.on-product .float-wa { display:none; }
       <div class="pc-info">
         <div class="pc-eyebrow">🛡️ Impermeabilizante</div>
         <div class="pc-titulo">¿Tu techo filtra<br>con la <em>lluvia?</em></div>
-        <div class="pc-producto">Dupaint Membrana Pol+Elast · 20 kg</div>
+        <div class="pc-producto">Pimak Membrana Poliuretánica · 20 kg</div>
         <div class="pc-precios">
           <div class="pc-lista" id="pl-techo"></div>
           <div class="pc-promo"><span>$</span><span id="pp-techo"></span></div>
         </div>
-        <a class="pc-cta" href="https://wa.me/5493512514243?text=Hola!%20Me%20interesa%20la%20Membrana%20Pol%2BElast%2020kg%20%F0%9F%8E%A8%20%C2%BFCu%C3%A1l%20es%20el%20precio%20y%20tienen%20stock%3F" target="_blank" onclick="event.stopPropagation()">
+        <a class="pc-cta" href="https://wa.me/5493512514243?text=Hola%21%20Me%20interesa%20la%20Pimak%20Membrana%20Poliuret%C3%A1nica%2020%20kg%20%F0%9F%9B%A1%EF%B8%8F%20%C2%BFTienen%20stock%3F" target="_blank" onclick="event.stopPropagation()">
           💬 Consultar por WhatsApp
         </a>
       </div>
@@ -2062,7 +2064,7 @@ async function sendWhatsApp() {
 // ============================================================
 let currentFilter = 'Todos';
 let currentSearch = '';
-const PROMO_IDS = new Set([4,8,12,15,19,24,35,39,43,53,57,61,65,69,73,76,83,87,90,93,101,105,109,113,117,121,125,129,133,137,140,143]);
+const PROMO_IDS = new Set([28,145,79,4,8,12,15,19,24,35,39,43,53,57,61,65,69,73,76,83,87,90,93,101,105,109,113,117,121,125,129,133,137,140,143]);
 
 // Mapa directo: nombre de modelo → archivo de foto
 // Una foto por modelo, todos los tamaños usan la misma
@@ -2228,7 +2230,9 @@ function renderProducts() {
 
   // Star products siempre primero (en "Todos" y en búsqueda vacía)
   if (!q) {
-    const starOrder = [61, 69, 73, 12, 8, 24, 35];
+    // Primero los que queremos empujar en cada filtro; después los destacados
+    const PRIMERO = { Membranas:[28,145], Latex:[79,73], Promo:[28,145,79,73] }[currentFilter] || [];
+    const starOrder = [...PRIMERO, ...[61, 69, 73, 12, 8, 24, 35].filter(id => !PRIMERO.includes(id))];
     filtered.sort((a, b) => {
       const ai = starOrder.indexOf(a.id);
       const bi = starOrder.indexOf(b.id);
@@ -2757,7 +2761,7 @@ function showToast(msg) {
 // ============================================================
 function initFeaturedPrices() {
   const findProd = id => PRODUCTS.find(p => p.id === id);
-  const t  = precio(findProd(8));   // Membrana Pol+Elast 20kg
+  const t  = precio(findProd(28));  // Pimak Membrana Poliuretánica 20kg
   const pa = precio(findProd(69));  // Látex Profesional 20lts
   document.getElementById('pl-techo').textContent   = 'Precio de lista: $' + fmt(t.lista);
   document.getElementById('pp-techo').textContent   = fmt(t.promo);
@@ -2768,9 +2772,8 @@ function initFeaturedPrices() {
   document.getElementById('pl-piscina').textContent = 'Precio de lista: $' + fmt(pi.lista);
   document.getElementById('pp-piscina').textContent = fmt(piExtra);
   // "desde" del hero: balde de 20 más barato publicado
-  const desde = cat => Math.min(...PRODUCTS.filter(p => p.cat === cat && p.lts === 20 && esVisible(p)).map(p => p.t));
-  document.getElementById('desdeMem').textContent = '$' + fmt(desde('Membranas'));
-  document.getElementById('desdeLat').textContent = '$' + fmt(desde('Latex'));
+  document.getElementById('desdeMem').textContent = '$' + fmt(findProd(28).t);  // Pimak Membrana 20 kg
+  document.getElementById('desdeLat').textContent = '$' + fmt(findProd(73).t);  // Zi-Muro Látex 20 L
   const qm = document.getElementById('qmNumProd');
   if (qm) qm.textContent = new Set(PRODUCTS.filter(esVisible).map(p => p.nom)).size;
 }
