@@ -1,0 +1,9 @@
+# Cloudflare Pages — cache
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/fotos/*
+  Cache-Control: public, max-age=86400
+/banners/*
+  Cache-Control: public, max-age=86400
