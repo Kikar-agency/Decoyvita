@@ -240,9 +240,9 @@ function fallbackCopy(txt){ const ta = document.createElement('textarea'); ta.va
 
 /* ----------------------------- precios ----------------------------- */
 function precioUnit(costo, tipo){
-  const transf = r10(num(costo) * cfg('MARKUP', 1.35));
+  const transf = r10(num(costo) * cfg('MARKUP', 1/0.70));
   if (tipo === 'tarjeta') return r10(transf * cfg('RECARGO_TARJETA', 1.5));
-  if (tipo === 'mayorista') return r10(num(costo) * cfg('MARKUP_MAYORISTA', 1.15));
+  if (tipo === 'mayorista') return r10(num(costo) * cfg('MARKUP_MAYORISTA', 1/0.85));
   return transf;
 }
 function calcPedido(p){
@@ -264,19 +264,57 @@ function grupos(){
 
 /* ----------------------------- datos / API ----------------------------- */
 const DEMO_PRODUCTOS = [
-  ['zm-memb','Zi-Muro Membrana Líquida','Membranas','kg',[[1,3562],[4,9582],[10,19303],[20,33345]]],
-  ['dp-pol','Dupaint Membrana Poliuretánica','Membranas','kg',[[1,4505],[4,12700],[10,25285],[20,46610]]],
-  ['dp-pe','Dupaint Membrana Pol+Elastomérica','Membranas','kg',[[1,6090],[4,17655],[10,34305],[20,72650]]],
-  ['dp-cau','Dupaint Membrana Caucho+Poliuretánica','Membranas','kg',[[4,19440],[10,52020],[20,82123]]],
-  ['zm-lat','Zi-Muro Látex Int/Ext','Látex','L',[[1,3280],[4,8430],[10,17524],[20,29490]]],
-  ['dp-prof','Dupaint Látex Profesional','Látex','L',[[1,3855],[4,10558],[10,23820],[20,41685]]],
-  ['dp-lav','Dupaint Látex Pro Lavable','Látex','L',[[1,5682],[4,14162],[10,36295],[20,65784]]],
+  ["pimak-membrana-poliuretanica","Pimak Membrana Poliuretánica","Membranas","kg",[[4, 10910], [10, 24655], [20, 41685]]],
+  ["dupaint-membrana-poliuretanica","Dupaint Membrana Poliuretánica","Membranas","kg",[[1, 4505], [4, 12700], [10, 25285], [20, 46610]]],
+  ["zi-muro-membrana-liquida","Zi-Muro Membrana Líquida","Membranas","kg",[[1, 3562], [4, 9582], [10, 19303], [20, 33345]]],
+  ["pimak-latex-acrilico-int-ext","Pimak Látex Acrílico Int/Ext","Látex","L",[[4, 5560], [10, 11790], [20, 19435]]],
+  ["dupaint-latex-profesional-int-ext","Dupaint Látex Profesional Int/Ext","Látex","L",[[1, 3855], [4, 10558], [10, 23820], [20, 41685]]],
+  ["zi-muro-latex-int-ext","Zi-Muro Látex Int/Ext","Látex","L",[[1, 3280], [4, 8430], [10, 17524], [20, 29490]]],
+  ["dupaint-membrana-en-pasta-titanium","Dupaint Membrana en Pasta Titanium","Membranas","L",[[1, 10139], [4, 26870], [10, 56380], [20, 98250]]],
+  ["dupaint-membrana-poliuretanica-elastomerica","Dupaint Membrana Poliuretánica+Elastomérica","Membranas","kg",[[1, 6090], [4, 17655], [10, 34305], [20, 72650]]],
+  ["dupaint-membrana-caucho-poliuretanica","Dupaint Membrana Caucho+Poliuretánica","Membranas","kg",[[4, 19440], [10, 52020], [20, 82123]]],
+  ["dupaint-membrana-fibrada-poliuretanica","Dupaint Membrana Fibrada+Poliuretánica","Membranas","kg",[[4, 21230], [10, 34750], [20, 65795]]],
+  ["dupaint-membrana-fibrada","Dupaint Membrana Fibrada","Membranas","kg",[[1, 5280], [4, 15900], [10, 31892], [20, 59810]]],
+  ["pimak-membrana-elastomerica","Pimak Membrana Elastomérica","Membranas","kg",[[4, 10375], [10, 23350], [20, 38711]]],
+  ["zi-muro-tapa-goteras","Zi-Muro Tapa Goteras","Membranas","L",[[1, 4993], [5, 15795], [10, 31190], [20, 56750]]],
+  ["dupaint-membrana-frentes-y-muros-pol-elast","Dupaint Membrana Frentes y Muros Pol.+Elast.","Membranas","kg",[[1.2, 5450], [4.8, 20522], [12, 47862], [20, 76241], [24, 86592]]],
+  ["zi-muro-membrana-frentes-y-muros-poliuretanica","Zi-Muro Membrana Frentes y Muros Poliuretánica","Membranas","kg",[[1.2, 4680], [4.8, 15395], [12, 38791], [20, 64555], [24, 74020]]],
+  ["zi-muro-membrana-elastomerica-caucho","Zi-Muro Membrana Elastomérica+Caucho","Membranas","kg",[[10, 25000], [20, 45000]]],
+  ["dupaint-latex-premium-lavable-int-ext","Dupaint Látex Premium Lavable Int/Ext","Látex","L",[[1, 7580], [4, 21090], [10, 48453], [20, 92643]]],
+  ["dupaint-latex-cielorraso-interior","Dupaint Látex Cielorraso Interior","Látex","L",[[1, 5397], [4, 18524], [10, 27095], [20, 54728]]],
+  ["dupaint-latex-pro-lavable-int-ext","Dupaint Látex Pro Lavable Int/Ext","Látex","L",[[1, 5682], [4, 14162], [10, 36295], [20, 65784]]],
+  ["dupaint-latex-works-lavable-int-ext","Dupaint Látex Works Lavable Int/Ext","Látex","L",[[1, 4960], [4, 12650], [10, 28355], [20, 53310]]],
+  ["zi-muro-latex-interior","Zi-Muro Látex Interior","Látex","L",[[4, 6630], [10, 15050], [20, 23594]]],
+  ["zi-muro-latex-color-grupo-1","Zi-Muro Látex Color Grupo 1","Látex","L",[[4, 14950], [10, 32080], [20, 56800]]],
+  ["zi-muro-latex-color-grupo-2","Zi-Muro Látex Color Grupo 2","Látex","L",[[4, 16450], [10, 35290], [20, 62490]]],
+  ["dupaint-masilla-sella-grietas","Dupaint Masilla Sella Grietas","Accesorios y esmaltes","kg",[[0.5, 3100], [1, 5300], [5, 22000]]],
+  ["dupaint-masilla-sella-juntas","Dupaint Masilla Sella Juntas","Accesorios y esmaltes","kg",[[0.5, 3400], [1, 5500], [5, 23000]]],
+  ["zi-muro-enduido-int-ext","Zi-Muro Enduido Int/Ext","Accesorios y esmaltes","kg",[[0.5, 1900], [1, 2480], [4, 6670], [10, 15250], [20, 24340]]],
+  ["zi-muro-masilla-para-placa-de-yeso","Zi-Muro Masilla para Placa de Yeso","Accesorios y esmaltes","kg",[[1.6, 2450], [6, 7150], [15, 15750], [25, 23956]]],
+  ["zi-muro-fijador-sellador-al-agua","Zi-Muro Fijador Sellador al Agua","Accesorios y esmaltes","L",[[1, 2170], [4, 6250], [10, 14260], [20, 22370]]],
+  ["dupaint-esmalte-piso-lajas-y-tejas","Dupaint Esmalte Piso Lajas y Tejas","Accesorios y esmaltes","L",[[1, 5260], [4, 20490], [10, 48210], [20, 94120]]],
+  ["dupaint-esmalte-acrilico-para-chapas","Dupaint Esmalte Acrílico para Chapas","Accesorios y esmaltes","L",[[1, 8000], [4, 25450], [10, 56190], [20, 107600]]],
+  ["dupaint-pintura-para-piscina-al-agua","Dupaint Pintura para Piscina al Agua","Madera, piscina y revestimientos","L",[[1, 6790], [4, 23850], [10, 63600], [20, 115116]]],
+  ["dupaint-protector-ladrillos-siliconado","Dupaint Protector Ladrillos Siliconado","Madera, piscina y revestimientos","L",[[1, 3480], [4, 11236], [10, 33700], [20, 61700]]],
+  ["dupaint-protector-para-madera-incoloro","Dupaint Protector para Madera Incoloro","Madera, piscina y revestimientos","L",[[1, 3290], [4, 10500], [10, 28100], [20, 52050]]],
+  ["maderin-impregnante-lazur-tipo-cetol","Maderin Impregnante Lazur tipo Cetol","Madera, piscina y revestimientos","L",[[1, 7560], [4, 27060], [10, 65870], [20, 122540]]],
+  ["madeira-preservador-y-curador-para-madera","Madeira Preservador y Curador para Madera","Madera, piscina y revestimientos","L",[[1, 2210], [5, 5400], [10, 13600], [20, 22800]]],
+  ["dupaint-revestimiento-rodillo-blanco-tintometrico","Dupaint Revestimiento Rodillo Blanco/Tintométrico","Madera, piscina y revestimientos","kg",[[5, 10330], [15, 27010], [25, 46910]]],
+  ["dupaint-revestimiento-rodillo-standard","Dupaint Revestimiento Rodillo Standard","Madera, piscina y revestimientos","L",[[4, 10950], [10, 28360], [20, 51600]]],
 ].flatMap(([id,n,l,u,t]) => t.map(([m,c]) => ({ id:id+'-'+m, nombre:n, linea:l, medida:m, unidad:u, costo:c, activo:true })));
-const DEMO_CONFIG = { MARKUP:1.35, RECARGO_TARJETA:1.5, COMISION_TARJETA:0.25, MARKUP_MAYORISTA:1.15, OBJETIVO_NETO_MES:3000000, SOCIOS:3, WA_NEGOCIO:'5493512514243' };
+const DEMO_VER = 2; // subir cuando cambie la lista de la fábrica
+const DEMO_CONFIG = { MARKUP:1/0.70, RECARGO_TARJETA:1.5, COMISION_TARJETA:0.25, MARKUP_MAYORISTA:1/0.85, OBJETIVO_NETO_MES:3000000, SOCIOS:3, WA_NEGOCIO:'5493513755543' };
 
 function demoDB(){
   let db = LS.get('dv_demo', null);
-  if (!db){ db = { productos:DEMO_PRODUCTOS, clientes:[], pedidos:[], gastos:[], config:DEMO_CONFIG }; LS.set('dv_demo', db); }
+  if (!db){ db = { productos:DEMO_PRODUCTOS, clientes:[], pedidos:[], gastos:[], config:DEMO_CONFIG, ver:DEMO_VER }; LS.set('dv_demo', db); }
+  else if (db.ver !== DEMO_VER){
+    // Lista nueva: reemplaza el catálogo y los márgenes, conserva pedidos, clientes, gastos y productos cargados a mano
+    const propios = (db.productos || []).filter(p => /^X/.test(String(p.id)));
+    db.productos = DEMO_PRODUCTOS.concat(propios);
+    db.config = Object.assign({}, db.config, { MARKUP:DEMO_CONFIG.MARKUP, MARKUP_MAYORISTA:DEMO_CONFIG.MARKUP_MAYORISTA, WA_NEGOCIO:DEMO_CONFIG.WA_NEGOCIO });
+    db.ver = DEMO_VER; LS.set('dv_demo', db);
+  }
   return db;
 }
 function nuevoId(pref){ return pref + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*36).toString(36).toUpperCase(); }
@@ -509,11 +547,27 @@ function cambiarTipo(k){
   if (k === 'tarjeta') P.medio_pago = 'Tarjeta / Mercado Pago';
   drawPedido();
 }
+/* ----------------------------- buscador de productos ----------------------------- */
+const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const coincide = (g, q) => { const t = norm(g.nombre + ' ' + (g.linea||'')); return norm(q).split(/\s+/).filter(Boolean).every(w => t.includes(w)); };
+function buscadorHTML(campo, cont){
+  return `<input class="i" type="search" placeholder="🔍 Buscar producto (ej: pimak, latex, masilla)" value="${esc(UI[campo]||'')}"
+    style="width:100%;margin:10px 0 4px" oninput="filtrarProd('${campo}','${cont}',this.value)">`;
+}
+function filtrarProd(campo, cont, q){
+  UI[campo] = q;
+  const box = $(cont); if (!box) return;
+  let vis = 0;
+  box.querySelectorAll('[data-q]').forEach(el => { const ok = coincide({ nombre:el.dataset.q }, q); el.style.display = ok ? '' : 'none'; if (ok) vis++; });
+  const nada = box.querySelector('.sin-res'); if (nada) nada.style.display = vis ? 'none' : '';
+}
 function pickerHTML(){
-  return `<div class="prod-pick" style="margin-top:10px">${grupos().map(g => `
-    <div class="pp"><div class="n">${esc(g.nombre)}</div>
+  const q = UI.prodBusca || '';
+  return `${buscadorHTML('prodBusca','prodPick')}<div class="prod-pick" id="prodPick" style="margin-top:6px">${grupos().map(g => `
+    <div class="pp" data-q="${esc(g.nombre + ' ' + (g.linea||''))}" ${coincide(g, q) ? '' : 'style="display:none"'}><div class="n">${esc(g.nombre)}</div>
       <div class="sizes">${g.tams.map(p => `<button onclick="agregarItem('${esc(p.id)}')">${esc(p.medida)} ${esc(g.unidad)}<small>${fmt(precioUnit(p.costo, P.tipo_precio))}</small></button>`).join('')}</div>
     </div>`).join('')}
+    <div class="small muted sin-res" style="padding:8px 2px;${grupos().some(g => coincide(g, q)) ? 'display:none' : ''}">No hay productos con ese nombre. Cargalo abajo como "Otro producto".</div>
     <div class="pp"><div class="n">Otro producto (a pedido)</div>
       <div class="row" style="margin-top:8px"><input class="i grow" id="otroN" placeholder="Nombre y medida"><input class="i" id="otroP" style="width:110px" inputmode="numeric" placeholder="Precio"></div>
       <div class="row" style="margin-top:6px"><input class="i grow" id="otroC" inputmode="numeric" placeholder="Costo de fábrica (para la ganancia)"><button class="btn sm" onclick="agregarOtro()">Agregar</button></div>
@@ -836,11 +890,12 @@ async function guardarGasto(){
 }
 
 /* ----------------------------- PRODUCTOS (admin) ----------------------------- */
-VIEWS.productos = () => `<div class="small muted" style="margin-bottom:10px">Cuando la fábrica mande lista nueva, cambiá el costo acá. Los precios se recalculan solos (transferencia = costo × ${cfg('MARKUP',1.35)}).</div>` +
-  grupos().map(g => `<div class="card"><b>${esc(g.nombre)}</b>${g.tams.map(p => `
+VIEWS.productos = () => `<div class="small muted" style="margin-bottom:10px">Cuando la fábrica mande lista nueva, cambiá el costo acá. Los precios se recalculan solos (transferencia = costo ÷ ${(1/cfg('MARKUP',1/0.70)).toFixed(2).replace('.',',')}).</div>` +
+  buscadorHTML('costoBusca','listaCostos') + `<div id="listaCostos">` +
+  grupos().map(g => `<div class="card" data-q="${esc(g.nombre + ' ' + (g.linea||''))}" ${coincide(g, UI.costoBusca||'') ? '' : 'style="display:none"'}><b>${esc(g.nombre)}</b>${g.tams.map(p => `
     <div class="row" style="margin-top:8px"><div style="width:60px" class="small">${esc(p.medida)} ${esc(g.unidad)}</div>
       <input class="i grow" inputmode="numeric" value="${num(p.costo)}" onchange="guardarCosto('${esc(p.id)}', this.value)">
-      <div class="small right" style="width:96px">${fmt(precioUnit(p.costo,'transferencia'))}<br><span class="muted">may. ${fmt(precioUnit(p.costo,'mayorista'))}</span></div></div>`).join('')}</div>`).join('');
+      <div class="small right" style="width:96px">${fmt(precioUnit(p.costo,'transferencia'))}<br><span class="muted">may. ${fmt(precioUnit(p.costo,'mayorista'))}</span></div></div>`).join('')}</div>`).join('') + `<div class="small muted sin-res" style="display:none;padding:8px 2px">No hay productos con ese nombre.</div></div>`;
 async function guardarCosto(id, v){
   try{ await guardar('Productos', { id, costo:num(v) }); }catch(e){ return; }
   render(); toast('Costo actualizado ✓');
