@@ -106,6 +106,14 @@ textarea.i{min-height:70px;resize:vertical}
 .stepper button{border:0;background:#faf8f5;width:34px;height:34px;font-size:18px;font-weight:700}
 .stepper input{width:42px;border:0;text-align:center;font-weight:700;height:34px;outline:none}
 .prod-pick{display:grid;gap:8px}
+#prodRes{display:grid;gap:8px;margin-top:8px}
+#prodRes .pp{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+#prodRes .pp .n{font-weight:700;font-size:15px}
+.buscar-prod{margin-top:12px}
+.link-btn{background:none;border:0;padding:6px 0 0;color:var(--brand);font-weight:600;font-size:13.5px;cursor:pointer}
+.detalle{margin-top:14px;background:#faf8f5;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.detalle .tot{padding:3px 0;gap:10px}
+.detalle .tot span:last-child{flex:none;font-weight:600}
 .prod-pick .pp{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
 .prod-pick .pp .n{font-weight:700;font-size:15px}
 .sizes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
@@ -401,6 +409,7 @@ function start(){
   const tabs = TABS[S.rol];
   if (!TAB || !tabs.find(t => t[0] === TAB)) TAB = tabs[0][0];
   render();
+  seedProductosSiFalta();
 }
 function go(t){ TAB = t; window.scrollTo(0,0); render(); }
 function render(){
@@ -412,11 +421,13 @@ function render(){
 }
 
 /* ----------------------------- sheet ----------------------------- */
-function openSheet(titulo, html, foot, accion){
+function openSheet(titulo, html, foot, accion, mantenerScroll){
+  const yaAbierto = $('sheet').classList.contains('open');
+  const y = $('sheet').scrollTop;
   $('shTitle').textContent = titulo; $('shBody').innerHTML = html;
   $('shAction').innerHTML = accion || '';
   const f = $('shFoot'); if (foot){ f.innerHTML = foot; f.classList.remove('hidden'); } else f.classList.add('hidden');
-  $('sheet').classList.add('open'); $('sheet').scrollTop = 0; document.body.style.overflow = 'hidden';
+  $('sheet').classList.add('open'); $('sheet').scrollTop = (mantenerScroll && yaAbierto) ? y : 0; document.body.style.overflow = 'hidden';
 }
 function closeSheet(){ $('sheet').classList.remove('open'); document.body.style.overflow = ''; }
 
@@ -467,7 +478,8 @@ function formPedido(id, preCliente){
   };
   if (preCliente){ const c = S.clientes.find(x => String(x.id) === String(preCliente)); if (c) asignarCliente(c, true); }
   P.cobrado = P.cobrado === true || String(P.cobrado) === 'true';
-  P._calc = false; P._pick = false;
+  P._calc = false; P._pick = false; P._nuevo = true;
+  UI.prodBusca = ''; UI.prodTodos = false; UI.otrasMed = {};
   drawPedido();
 }
 function asignarCliente(c, silent){
@@ -500,16 +512,33 @@ function drawPedido(){
       </div>
       ${P.items.length ? P.items.map((it, i) => `
         <div class="item">
-          <div class="grow"><div style="font-weight:700;font-size:15px">${esc(it.nombre)}${it.medida ? ' · ' + esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div>
-            <div class="small muted">${fmt(it.precio)} c/u${ver && S.rol==='admin' ? ' · costo ' + fmt(it.costo) : ''}</div></div>
+          ${fotoHTML(it.nombre, 44)}
+          <div class="grow" style="min-width:0">${it.pid ? `<div style="font-weight:700;font-size:15px">${esc(it.nombre)}${it.medida ? ' · ' + esc(it.medida) + ' ' + esc(it.unidad||'') : ''}</div>`
+              : `<input class="i" style="padding:6px 8px;font-size:15px;font-weight:700" value="${esc(it.nombre)}" placeholder="Concepto" onchange="P.items[${i}].nombre=this.value;drawPedido()">`}
+            ${it.pid ? `<div class="small muted">${fmt(it.precio)} c/u${S.rol==='admin' ? ' · costo ' + fmt(it.costo) : ''}</div>`
+              : `<div class="row small" style="gap:6px;margin-top:4px"><span class="muted">$</span><input class="i" style="padding:6px 8px;font-size:15px;max-width:120px" inputmode="numeric" value="${num(it.precio)||''}" placeholder="Precio" onchange="P.items[${i}].precio=num(this.value);drawPedido()"><button class="btn ghost sm" style="min-height:34px;padding:4px 10px" onclick="P.items.splice(${i},1);drawPedido()">Quitar</button></div>`}</div>
           <div class="stepper"><button onclick="cant(${i},-1)">−</button><input inputmode="numeric" value="${num(it.cantidad)}" onchange="P.items[${i}].cantidad=Math.max(0,num(this.value));drawPedido()"><button onclick="cant(${i},1)">+</button></div>
-        </div>`).join('') : `<div class="small muted" style="padding:6px 0">Todavía no hay productos.</div>`}
-      <div class="row wrap" style="margin-top:10px">
-        <button class="btn ghost sm grow" onclick="P._pick=!P._pick;P._calc=false;drawPedido()">＋ Agregar producto</button>
-        <button class="btn ghost sm grow" onclick="P._calc=!P._calc;P._pick=false;drawPedido()">📐 Calcular por m²</button>
+        </div>`).join('') : `<div class="small muted" style="padding:6px 0">Todavía no hay productos. Buscalos acá abajo.</div>`}
+
+      <div class="buscar-prod">
+        <div class="row" style="gap:6px">
+          <input class="i grow" id="prodQ" type="search" autocomplete="off" placeholder="🔍 Buscar: pimak, latex, membrana…" value="${esc(UI.prodBusca||'')}" oninput="UI.prodBusca=this.value;UI.prodTodos=false;pintarResultados()">
+          <button class="btn ghost sm" style="min-height:46px" onclick="UI.prodTodos=!UI.prodTodos;UI.prodBusca='';drawPedido()">${UI.prodTodos ? 'Cerrar ▴' : 'Ver todos ▾'}</button>
+        </div>
+        <div id="prodRes">${resultadosHTML()}</div>
       </div>
-      ${P._pick ? pickerHTML() : ''}
+
+      <div class="row wrap" style="margin-top:10px;gap:8px">
+        <button class="btn ghost sm grow" onclick="agregarLibre('Envío')">🚚 Envío</button>
+        <button class="btn ghost sm grow" onclick="agregarLibre('')">＋ Otro concepto</button>
+        <button class="btn ghost sm grow" onclick="P._calc=!P._calc;drawPedido()">📐 Por m²</button>
+      </div>
       ${P._calc ? calcHTML() : ''}
+
+      ${P.items.length ? `<div class="detalle">
+        <div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Detalle</div>
+        ${P.items.map(i => `<div class="tot small"><span>${num(i.cantidad)} × ${esc(i.nombre || 'Concepto')}${i.medida ? ' ' + esc(i.medida) + ' ' + esc(i.unidad||'') : ''}</span><span>${fmt(num(i.precio) * num(i.cantidad))}</span></div>`).join('')}
+      </div>` : ''}
       <div class="sep"></div>
       ${P.tipo_precio==='tarjeta' ? `<div class="tot small muted"><span>6 cuotas de</span><span>${fmt(t.total/6)}</span></div>` : ''}
       <div class="tot main"><span>Total</span><span>${fmt(t.total)}</span></div>
@@ -530,10 +559,12 @@ function drawPedido(){
       <label class="f">Notas</label><textarea class="i" oninput="P.notas=this.value" placeholder="Ej: tocar timbre B, paga al recibir, quiere factura…">${esc(P.notas)}</textarea>
     </div>
 
+    ${P.items.length ? `<button class="btn brand block" style="margin-bottom:10px" onclick="imagenPedido()">🖼️ Pedido como imagen (para WhatsApp)</button>` : ''}
     ${P.telefono ? `<a class="btn wa block" target="_blank" href="${waLink(P.telefono, textoPresupuesto())}">💬 Mandar presupuesto por WhatsApp</a>` : ''}
   `;
+  const primera = P._nuevo; P._nuevo = false;
   openSheet(P.id ? 'Pedido' : 'Nuevo pedido', html,
-    `<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" onclick="guardarPedido()">Guardar pedido</button>`);
+    `<button class="btn ghost" onclick="closeSheet()">Cancelar</button><button class="btn brand grow" onclick="guardarPedido()">Guardar pedido</button>`, '', !primera);
 }
 function drawPedidoKeep(focusId){
   const pos = $(focusId) ? $(focusId).selectionStart : null;
@@ -548,8 +579,64 @@ function cambiarTipo(k){
   drawPedido();
 }
 /* ----------------------------- buscador de productos ----------------------------- */
-const norm = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/zi-?muro/g, 'zimuro');
 const coincide = (g, q) => { const t = norm(g.nombre + ' ' + (g.linea||'')); return norm(q).split(/\s+/).filter(Boolean).every(w => t.includes(w)); };
+const MEDIDAS_PRINC = [4, 10, 20];
+
+// Fotos de la web (misma carpeta /fotos del sitio)
+const FOTOS = [
+  [/pimak.*membrana/, 'pimak_membrana_pol.webp'],
+  [/pimak.*latex/, 'pimak_latex.webp'],
+  [/zimuro.*membrana liquida/, 'zimuro_membrana_liquida_nobg.webp'],
+  [/zimuro.*caucho/, 'zimuro_membrana_caucho.webp'],
+  [/zimuro.*latex/, 'zimuro_latex_nobg.webp'],
+  [/dupaint.*caucho/, 'dupaint_membrana_caucho_nobg.webp'],
+  [/dupaint.*membrana.*elastom/, 'dupaint_membrana_pol_elast_nobg.webp'],
+  [/dupaint membrana poliuretanica$/, 'dupaint_membrana_pol_nobg.webp'],
+  [/dupaint.*pro lavable/, 'dupaint_latex_pro_lavable_nobg.webp'],
+  [/dupaint.*profesional/, 'dupaint_latex_profesional_nobg.webp'],
+  [/dupaint.*works/, 'dupaint_latex_works_nobg.webp'],
+];
+function fotoDe(nombre){
+  const n = norm(nombre);
+  const f = FOTOS.find(([re]) => re.test(n));
+  return f ? '../fotos/' + f[1] : '';
+}
+function marcaDe(nombre){
+  const n = norm(nombre);
+  return /pimak/.test(n) ? 'PIMAK' : /zimuro/.test(n) ? 'ZI-MURO' : /dupaint/.test(n) ? 'DUPAINT' : /envio/.test(n) ? '🚚' : (String(nombre||'?').trim().split(' ')[0] || '?').slice(0,7).toUpperCase();
+}
+function fotoHTML(nombre, tam){
+  const src = fotoDe(nombre);
+  const box = `width:${tam}px;height:${tam}px;flex:none;border-radius:10px;background:#f4f1ec;display:flex;align-items:center;justify-content:center;overflow:hidden`;
+  return src ? `<div style="${box}"><img src="${src}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain"></div>`
+             : `<div style="${box};font-family:'Barlow Condensed';font-weight:800;font-size:${Math.round(tam/4.2)}px;color:var(--brand);text-align:center;line-height:1">${esc(marcaDe(nombre))}</div>`;
+}
+function resultadosHTML(){
+  const q = (UI.prodBusca || '').trim();
+  if (!q && !UI.prodTodos) return '';
+  const gs = grupos().filter(g => !q || coincide(g, q));
+  if (!gs.length) return `<div class="small muted" style="padding:10px 2px">No encontré "${esc(q)}". Cargalo con <b>＋ Otro concepto</b>.</div>`;
+  const lim = q ? gs.slice(0, 12) : gs;
+  return lim.map(g => {
+    const princ = g.tams.filter(p => MEDIDAS_PRINC.includes(num(p.medida)));
+    const otras = g.tams.filter(p => !MEDIDAS_PRINC.includes(num(p.medida)));
+    const verOtras = (UI.otrasMed || {})[g.nombre] || !princ.length;
+    const btn = p => `<button onclick="agregarItem('${esc(p.id)}')">${esc(String(p.medida).replace('.', ','))} ${esc(g.unidad)}<small>${fmt(precioUnit(p.costo, P.tipo_precio))}</small></button>`;
+    return `<div class="pp row" style="align-items:flex-start;gap:10px">${fotoHTML(g.nombre, 52)}
+      <div class="grow" style="min-width:0"><div class="n">${esc(g.nombre)}</div>
+        <div class="sizes">${(princ.length ? princ : []).map(btn).join('')}${verOtras ? otras.map(btn).join('') : ''}</div>
+        ${otras.length && princ.length ? `<button class="link-btn" onclick="UI.otrasMed=UI.otrasMed||{};UI.otrasMed['${esc(g.nombre).replace(/'/g, "\\'")}']=!${verOtras};pintarResultados()">${verOtras ? 'Ocultar otras medidas' : 'Otras medidas (' + otras.map(p => String(p.medida).replace('.', ',') + ' ' + g.unidad).join(', ') + ')'}</button>` : ''}
+      </div></div>`;
+  }).join('') + (q && gs.length > lim.length ? `<div class="small muted" style="padding:6px 2px">Hay ${gs.length - lim.length} más: afiná la búsqueda.</div>` : '');
+}
+function pintarResultados(){ const r = $('prodRes'); if (r) r.innerHTML = resultadosHTML(); }
+function agregarLibre(nombre){
+  P.items.push({ pid:'', nombre: nombre || 'Concepto', medida:'', unidad:'', cantidad:1, precio:0, costo:0 });
+  drawPedido();
+  setTimeout(() => { const ins = $('shBody').querySelectorAll('.item input.i'); const el = ins[ins.length - 1]; if (el){ el.focus(); } }, 50);
+}
+// buscador simple para la pestaña Productos
 function buscadorHTML(campo, cont){
   return `<input class="i" type="search" placeholder="🔍 Buscar producto (ej: pimak, latex, masilla)" value="${esc(UI[campo]||'')}"
     style="width:100%;margin:10px 0 4px" oninput="filtrarProd('${campo}','${cont}',this.value)">`;
@@ -561,28 +648,11 @@ function filtrarProd(campo, cont, q){
   box.querySelectorAll('[data-q]').forEach(el => { const ok = coincide({ nombre:el.dataset.q }, q); el.style.display = ok ? '' : 'none'; if (ok) vis++; });
   const nada = box.querySelector('.sin-res'); if (nada) nada.style.display = vis ? 'none' : '';
 }
-function pickerHTML(){
-  const q = UI.prodBusca || '';
-  return `${buscadorHTML('prodBusca','prodPick')}<div class="prod-pick" id="prodPick" style="margin-top:6px">${grupos().map(g => `
-    <div class="pp" data-q="${esc(g.nombre + ' ' + (g.linea||''))}" ${coincide(g, q) ? '' : 'style="display:none"'}><div class="n">${esc(g.nombre)}</div>
-      <div class="sizes">${g.tams.map(p => `<button onclick="agregarItem('${esc(p.id)}')">${esc(p.medida)} ${esc(g.unidad)}<small>${fmt(precioUnit(p.costo, P.tipo_precio))}</small></button>`).join('')}</div>
-    </div>`).join('')}
-    <div class="small muted sin-res" style="padding:8px 2px;${grupos().some(g => coincide(g, q)) ? 'display:none' : ''}">No hay productos con ese nombre. Cargalo abajo como "Otro producto".</div>
-    <div class="pp"><div class="n">Otro producto (a pedido)</div>
-      <div class="row" style="margin-top:8px"><input class="i grow" id="otroN" placeholder="Nombre y medida"><input class="i" id="otroP" style="width:110px" inputmode="numeric" placeholder="Precio"></div>
-      <div class="row" style="margin-top:6px"><input class="i grow" id="otroC" inputmode="numeric" placeholder="Costo de fábrica (para la ganancia)"><button class="btn sm" onclick="agregarOtro()">Agregar</button></div>
-    </div></div>`;
-}
 function agregarItem(pid){
   const p = S.productos.find(x => String(x.id) === String(pid)); if (!p) return;
   const ex = P.items.find(i => String(i.pid) === String(pid));
   if (ex) ex.cantidad = num(ex.cantidad) + 1;
   else P.items.push({ pid:p.id, nombre:p.nombre, medida:num(p.medida), unidad:p.unidad || unidadDe(p.nombre,p.linea), cantidad:1, precio:precioUnit(p.costo, P.tipo_precio), costo:num(p.costo) });
-  drawPedido();
-}
-function agregarOtro(){
-  const n = $('otroN').value.trim(); if (!n) return toast('Poné el nombre');
-  P.items.push({ pid:'', nombre:n, medida:'', unidad:'', cantidad:1, precio:num($('otroP').value), costo:num($('otroC').value) });
   drawPedido();
 }
 
@@ -642,6 +712,108 @@ function textoPresupuesto(){
   const ent = P.fecha_entrega ? `\n🚚 Te lo llevamos el ${fechaCorta(P.fecha_entrega).replace('Mar','martes').replace('Vie','viernes')}.` : '\n🚚 Entregamos martes y viernes, envío gratis dentro de Circunvalación.';
   return `¡Hola${nombre ? ' ' + nombre : ''}! Te paso el presupuesto 👇\n\n${lineas}\n\n${pago}${ent}\n\n¿Lo confirmamos?`;
 }
+/* ----------------------------- pedido como imagen ----------------------------- */
+function cargarImg(src){ return new Promise(r => { if (!src) return r(null); const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; }); }
+function cortarTexto(ctx, txt, ancho){
+  if (ctx.measureText(txt).width <= ancho) return [txt];
+  const pal = txt.split(' '); const lineas = []; let l = '';
+  pal.forEach(w => { const p = l ? l + ' ' + w : w; if (ctx.measureText(p).width > ancho && l){ lineas.push(l); l = w; } else l = p; });
+  if (l) lineas.push(l); return lineas.slice(0, 2);
+}
+async function imagenPedido(){
+  if (!P.items.length) return toast('Cargá productos primero');
+  toast('Armando la imagen…');
+  try{ await document.fonts.ready; }catch(e){}
+  const t = calcPedido(P);
+  const W = 1080, pad = 64, fila = 150;
+  const H = 430 + P.items.length * fila + 330;
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const CREMA = '#f4f1ec', NAR = '#E85D26', TINTA = '#16130f', GRIS = '#6f685f';
+  x.fillStyle = CREMA; x.fillRect(0, 0, W, H);
+  // encabezado
+  const logo = await cargarImg('../logo/logo_dv.png');
+  if (logo) x.drawImage(logo, pad, 56, 120, 120);
+  x.fillStyle = TINTA; x.font = "800 72px 'Barlow Condensed'"; x.fillText('DECO & VITA', pad + (logo ? 145 : 0), 128);
+  x.fillStyle = GRIS; x.font = "500 30px 'Barlow'"; x.fillText('Pinturas y membranas · Córdoba', pad + (logo ? 145 : 0), 170);
+  x.fillStyle = NAR; x.fillRect(pad, 215, W - pad*2, 6);
+  const titulo = VENDIDO.includes(P.estado) ? 'PEDIDO' : 'PRESUPUESTO';
+  x.fillStyle = TINTA; x.font = "800 54px 'Barlow Condensed'"; x.fillText(titulo, pad, 300);
+  x.fillStyle = GRIS; x.font = "500 30px 'Barlow'";
+  const fecha = fechaCorta(P.fecha || hoy());
+  x.textAlign = 'right'; x.fillText(fecha, W - pad, 300); x.textAlign = 'left';
+  if (P.cliente_nombre){ x.fillStyle = TINTA; x.font = "600 32px 'Barlow'"; x.fillText('Para: ' + P.cliente_nombre, pad, 352); }
+  // ítems
+  let y = 400;
+  for (const it of P.items){
+    x.fillStyle = '#ffffff'; x.beginPath(); x.roundRect ? x.roundRect(pad, y, W - pad*2, fila - 16, 18) : x.rect(pad, y, W - pad*2, fila - 16); x.fill();
+    const im = await cargarImg(fotoDe(it.nombre));
+    const bx = pad + 14, by = y + 12, bs = fila - 40;
+    x.fillStyle = CREMA; x.fillRect(bx, by, bs, bs);
+    if (im){ const r = Math.min(bs / im.width, bs / im.height); const w = im.width * r, hh = im.height * r; x.drawImage(im, bx + (bs - w)/2, by + (bs - hh)/2, w, hh); }
+    else { x.fillStyle = NAR; x.font = "800 26px 'Barlow Condensed'"; x.textAlign = 'center'; x.fillText(marcaDe(it.nombre), bx + bs/2, by + bs/2 + 9); x.textAlign = 'left'; }
+    const tx = bx + bs + 22, ancho = W - pad*2 - bs - 300;
+    x.fillStyle = TINTA; x.font = "700 32px 'Barlow'";
+    const nom = (it.nombre || 'Concepto') + (it.medida ? ' · ' + String(it.medida).replace('.', ',') + ' ' + (it.unidad||'') : '');
+    const ls = cortarTexto(x, nom, ancho); ls.forEach((l, k) => x.fillText(l, tx, y + 52 + k*36));
+    x.fillStyle = GRIS; x.font = "500 26px 'Barlow'";
+    x.fillText(num(it.cantidad) + ' × ' + fmt(it.precio), tx, y + 52 + ls.length*36 + 4);
+    x.fillStyle = TINTA; x.font = "700 36px 'Barlow Condensed'"; x.textAlign = 'right';
+    x.fillText(fmt(num(it.precio) * num(it.cantidad)), W - pad - 24, y + fila/2 + 4); x.textAlign = 'left';
+    y += fila;
+  }
+  // total
+  y += 10;
+  x.fillStyle = TINTA; x.fillRect(pad, y, W - pad*2, 120);
+  x.fillStyle = '#fff'; x.font = "800 46px 'Barlow Condensed'"; x.fillText('TOTAL', pad + 30, y + 76);
+  x.fillStyle = NAR; x.textAlign = 'right'; x.font = "800 62px 'Barlow Condensed'"; x.fillText(fmt(t.total), W - pad - 30, y + 80); x.textAlign = 'left';
+  y += 165;
+  x.fillStyle = GRIS; x.font = "500 28px 'Barlow'";
+  const pago = P.tipo_precio === 'tarjeta' ? '6 cuotas sin interés de ' + fmt(t.total/6) : P.tipo_precio === 'mayorista' ? 'Precio mayorista' : 'Precio pagando por transferencia';
+  x.fillText(pago, pad, y);
+  if (P.fecha_entrega) x.fillText('Entrega: ' + fechaCorta(P.fecha_entrega), pad, y + 42);
+  x.fillStyle = TINTA; x.font = "600 28px 'Barlow'"; x.textAlign = 'right';
+  x.fillText('WhatsApp ' + formatoTel(String(S.config.WA_NEGOCIO || '5493513755543')), W - pad, y);
+  x.fillStyle = GRIS; x.font = "500 26px 'Barlow'"; x.fillText('decoyvita.com.ar', W - pad, y + 42); x.textAlign = 'left';
+
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  const nombreArch = 'DecoyVita_' + (P.cliente_nombre || 'pedido').replace(/[^\w]+/g, '_') + '.png';
+  const file = new File([blob], nombreArch, { type:'image/png' });
+  if (navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], title:'Deco & Vita' }); return; }catch(e){ if (e && e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombreArch; document.body.appendChild(a); a.click(); a.remove();
+  toast('Imagen descargada');
+}
+function formatoTel(t){ const d = String(t).replace(/\D/g, ''); const m = d.match(/^549(\d{3})(\d{3})(\d{4})$/); return m ? `+54 9 ${m[1]} ${m[2]}-${m[3]}` : d; }
+
+/* ----------------------------- exportar ventas para Meta ----------------------------- */
+function exportarMeta(dias){
+  const desde = new Date(); desde.setDate(desde.getDate() - dias); const lim = isoDate(desde);
+  const ventas = S.pedidos.filter(p => VENDIDO.includes(p.estado) && telWa(p.telefono) && String(p.fecha_entrega || p.fecha).slice(0,10) >= lim);
+  if (!ventas.length) return toast('No hay ventas con teléfono en ese período');
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const filas = ventas.map(p => {
+    const [fn, ...resto] = String(p.cliente_nombre || '').trim().split(/\s+/);
+    const d = parseDate(String(p.fecha_entrega || p.fecha).slice(0,10)) || new Date(); d.setHours(12);
+    return [telWa(p.telefono), norm(fn || ''), norm(resto.join(' ')), 'cordoba', 'ar', 'Purchase', Math.floor(d.getTime()/1000), Math.round(num(p.total)), 'ARS', p.id].map(q).join(',');
+  });
+  const csv = ['phone,fn,ln,ct,country,event_name,event_time,value,currency,order_id'].concat(filas).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ventas_meta_' + hoy() + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+  toast(ventas.length + ' ventas exportadas');
+}
+
+/* ----------------------------- carga inicial del catálogo en la planilla ----------------------------- */
+async function seedProductosSiFalta(){
+  if (!API || S.rol !== 'admin' || (S.productos && S.productos.length)) return;
+  try{
+    const res = await fetch(API, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify({ pin:PIN, action:'seed_productos', productos:DEMO_PRODUCTOS }) });
+    const d = await res.json();
+    if (d.ok){ toast('Catálogo cargado en la planilla (' + d.cargados + ')'); refrescar(true); }
+  }catch(e){}
+}
+
 async function guardarPedido(){
   if (!P.cliente_nombre.trim()) return toast('Falta el nombre del cliente');
   // crea o actualiza el cliente
@@ -852,6 +1024,8 @@ VIEWS.mas = () => {
     reparto: [['config','⚙️','Configuración']],
   }[S.rol];
   return items.map(([k,ic,l]) => `<div class="card list-item row" onclick="go('${k}')"><span style="font-size:24px">${ic}</span><div class="grow name">${l}</div><span class="muted">›</span></div>`).join('')
+    + (S.rol === 'admin' ? `<div class="card"><b>📤 Ventas para Meta</b><div class="small muted" style="margin:4px 0 10px">Baja un CSV con los pedidos confirmados o entregados (con teléfono) para subir en el Administrador de eventos → Cargar eventos.</div>
+        <div class="row"><button class="btn ghost grow" onclick="exportarMeta(7)">Últimos 7 días</button><button class="btn ghost grow" onclick="exportarMeta(30)">Últimos 30 días</button></div></div>` : '')
     + `<div class="row" style="margin-top:14px"><button class="btn ghost grow" onclick="refrescar()">↻ Actualizar datos</button><button class="btn ghost grow" onclick="salir()">Salir</button></div>
        <div class="small muted" style="text-align:center;margin-top:14px">Rol: ${S.rol === 'admin' ? 'Administración' : S.rol === 'ventas' ? 'Ventas' : 'Reparto'}</div>`;
 };
